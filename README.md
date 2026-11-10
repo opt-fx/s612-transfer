@@ -2,6 +2,8 @@
 
 A browser tool for the Akai S612 sampler. It sends a sound to the sampler, reads one back, edits it, records through the sampler's own converters and keeps a library of sounds as disk images. It runs in Chrome or Edge with no install, talks to the sampler over MIDI, and the whole app is one HTML file. Made by OPT.
 
+**Use it now: https://opt-fx.github.io/s612-transfer/**
+
 **Status: release candidate.** It has been tested on one real S612. Nothing is uploaded anywhere: sounds and library folders stay on your computer.
 
 ## Quick start
