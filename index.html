@@ -1,0 +1,3254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S612 transfer</title>
+<style>
+:root { --bg:#0c0c0d; --panel:#161617; --edge:#2e2f32; --gold:#c9a45c; --accent:#d8cca6; --ink:#e9e6dd; --quiet:#9c9a92; --field:#101012; --btn:#232427;
+  --good:#6cc070; --bad:#ef6a5e; --onaccent:#1a1710; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { margin:0 auto; max-width:1760px; min-height:100vh; background:var(--bg); color:var(--ink); font:14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+main { padding:16px 20px 28px; }
+header { display:flex; align-items:baseline; gap:14px; padding-bottom:12px; margin-bottom:14px; border-bottom:1px solid var(--edge); }
+h1 { margin:0 0 0 17px; font-size:24px; font-weight:800; letter-spacing:.02em; color:var(--gold); } h1 span { font-weight:400; }
+.sub { color:var(--quiet); font-size:12px; }
+.panel, .display, .logbox { background:var(--panel); border:1px solid var(--edge); border-radius:8px; padding:14px 16px; margin-bottom:14px; }
+.cap { display:block; margin:0 0 10px; padding-bottom:5px; border-bottom:1px solid var(--edge); color:var(--gold); font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; }
+.row { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-bottom:16px; }
+label { color:var(--quiet); font-size:13px; }
+label.check { display:inline-flex; align-items:center; gap:6px; color:var(--ink); }
+input, select, button { font:inherit; color:var(--ink); background:var(--field); border:1px solid var(--edge); border-radius:6px; padding:5px 9px; }
+input[type=checkbox] { accent-color:var(--gold); padding:0; }
+input[type=number] { width:72px; }
+input[type=range] { accent-color:var(--gold); width:150px; padding:0; border:0; background:none; }
+select#fadeCurve { height:28px; padding-top:0; padding-bottom:0; font-size:13px; }
+select { appearance:none; -webkit-appearance:none; padding-right:30px; text-overflow:ellipsis;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239c9a92' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 11px center; background-size:12px 8px; }
+.ports { display:grid; grid-template-columns:64px minmax(0,1fr); gap:8px 10px; align-items:center; margin:0 0 16px; }
+.ports select { width:100%; min-width:0; } .ports .unit { display:flex; align-items:center; gap:12px; }
+button { cursor:pointer; background:var(--btn); }
+button:hover:not(:disabled) { border-color:var(--gold); }
+button:active:not(:disabled) { transform:translateY(1px); }
+button:disabled { opacity:.45; cursor:not-allowed; }
+button.red { background:#b3402f; border-color:#b3402f; color:#fff; font-weight:600; }
+button.red:hover:not(:disabled) { border-color:#ff8b78; }
+button:focus, select:focus, input:focus { outline:none; }
+/* a clear ring for keyboard users only (mouse clicks do not show it) */
+button:focus-visible, select:focus-visible, input:focus-visible, .knob:focus-visible, .slot:focus-visible { outline:2px solid var(--gold, #c9a45c); outline-offset:2px; }
+.keys { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0; }
+.keys button, .keys .key button { min-width:0; height:28px; padding:0 11px; font-size:13px; }
+.lamp { width:10px; height:10px; border-radius:50%; background:#2a2a2c; display:inline-block; }
+.lamp.on.green { background:var(--good); box-shadow:0 0 6px var(--good); } .lamp.on.red { background:var(--bad); box-shadow:0 0 6px var(--bad); }
+.read { color:var(--ink); font-size:13px; }
+.display { background:#050506; }
+canvas { width:100%; height:160px; display:block; background:#020203; border-radius:4px; cursor:crosshair; }
+.stats { color:var(--gold); margin-top:8px; min-height:18px; font-size:13px; }
+.status { color:var(--quiet); font-size:13px; }
+.logbox .cap { margin-bottom:6px; }
+.log { max-height:340px; overflow:auto; font:11px/1.35 ui-monospace, monospace; min-height:20px; }
+.log div { white-space:pre-wrap; padding:1px 0; } .log .bad { color:var(--bad); } .log .info { color:var(--quiet); }
+/* knobs */
+.knobs { display:flex; flex-wrap:wrap; gap:4px 12px; justify-content:space-around; align-items:center; margin:0; padding:4px 0; }
+.knob { width:104px; text-align:center; user-select:none; touch-action:none; cursor:ns-resize; }
+.knob .t { color:var(--gold); font-weight:700; letter-spacing:.06em; text-transform:uppercase; font-size:12px; }
+.knob svg { display:block; margin:0 auto; overflow:visible; width:96px; height:90px; }
+.knob .r { display:flex; justify-content:space-between; color:var(--quiet); font-size:10px; padding:0 4px; margin-top:-6px; }
+.knob .v { color:var(--accent); font-size:11px; height:14px; }
+.knobs.off .knob { opacity:.4; pointer-events:none; }
+/* mode keys: turquoise squares with a red lamp above, as on the unit */
+.modegrid { display:grid; grid-template-columns:auto minmax(260px,420px); gap:10px 44px; align-items:center; justify-content:start; padding:4px 0; }
+.modekeys { display:grid; grid-template-columns:repeat(3, 82px); gap:14px 14px; align-items:end; }
+.modekeys .k2 { grid-column:3; grid-row:2; }
+.modekeys .k3 { grid-column:1; grid-row:2; }
+.modekeys .mauve button { background:#b58ccf !important; color:#2a1a33 !important; }
+.loopctl { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
+.modekeys .key { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.modekeys .lamp { width:12px; height:12px; margin-bottom:4px; border-radius:1px; background:#3a3a3d; box-shadow:0 0 0 1px #000 inset; }
+.modekeys .lamp.on { background:#ff4a3a; box-shadow:0 0 8px #ff4a3a, 0 0 0 1px #000 inset; }
+.keys .modekeys button, .modekeys .key button { width:82px; height:36px; padding:0 2px; border:0; border-radius:0; background:#38b8b4; color:#17302f; font:800 12px/1.1 system-ui, Arial, sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+.modekeys .key button:hover:not(:disabled) { filter:brightness(1.1); }
+/* start / end: two thin tracks with the turquoise scale between them, labelled as on the unit */
+.sliders { margin:0 34px 0 16px; position:relative; }
+.lbl { color:#3dbcbc; font-weight:800; font-size:12px; letter-spacing:.04em; text-transform:uppercase; margin:2px 0 4px; } .lbl.r { text-align:right; margin:4px 0 0; }
+.slot { position:relative; height:14px; background:#060607; border:1px solid var(--edge); border-radius:3px; cursor:ew-resize; touch-action:none; }
+.slot .thumb { position:absolute; top:0; width:10px; height:12px; border-radius:2px; background:linear-gradient(#9a9d9f 70%, #4fd08a 70%); box-shadow:0 1px 2px #000; }
+.scale { position:relative; height:34px; margin:4px 0; }
+.scale::before { content:""; position:absolute; left:13px; right:13px; top:0; bottom:0; border-right:1px solid #3dbcbc;
+  background:linear-gradient(90deg,#3dbcbc 1px,transparent 1px) 0 0 / calc(100% / 10) 100% repeat-x, linear-gradient(90deg,#3dbcbc 1px,transparent 1px) calc(100% / 20) 50% / calc(100% / 10) 45% repeat-x; opacity:.9; }
+.scale span { position:absolute; font-size:14px; font-weight:700; color:#3dbcbc; line-height:1; }
+.scale .z { left:-14px; top:50%; transform:translateY(-50%); } .scale .h { right:-34px; top:50%; transform:translateY(-50%); }
+.slots-off .slot { opacity:.4; pointer-events:none; }
+footer.ver { margin:0 0 20px; padding:0 20px; text-align:right; font-size:11px; color:var(--quiet); opacity:.6; }
+@media (max-width:600px) { .read { flex-basis:100%; } }
+
+.layout { display:grid; grid-template-columns:minmax(260px, 340px) 1fr; gap:16px; align-items:stretch; }
+.side, .work { display:flex; flex-direction:column; min-width:0; }
+.side .panel, .work .panel, .work .display, .work .logbox { margin-bottom:14px; }
+@media (max-width:880px) { .layout { grid-template-columns:1fr; } }
+.seg { display:inline-flex; gap:12px; }
+.seg button { height:28px; padding:0 12px; font-size:13px; }
+.seg button.on { border-color:var(--gold); color:var(--onaccent); background:var(--accent); font-weight:600; }
+@media (max-width:700px) { .modegrid { grid-template-columns:1fr; } .modekeys .k2 { grid-column:3; } .modekeys .k3 { grid-column:1; } }
+.keys + .row { margin-top:16px; }
+#lampBusy { margin-left:auto; }
+.where { font-size:12px; letter-spacing:.06em; text-transform:uppercase; padding:2px 8px; border:1px solid var(--edge); border-radius:4px; justify-self:start; }
+.where:empty { display:none; }
+.where.unit { color:#6cc070; border-color:#2f5a33; }
+.where.comp { color:#d6b25e; border-color:#5d4a1c; }
+.layout { align-items:stretch; }
+.side > .panel:last-child, .side > .logbox { flex:1 1 auto; margin-bottom:0; }
+.slot.off { opacity:.4; pointer-events:none; }
+.zoombar { position:relative; height:8px; margin:6px 0 14px; background:#0b0b0d; border:1px solid var(--edge); border-radius:4px; cursor:pointer; }
+#zoomthumb { position:absolute; top:0; bottom:0; background:#3a3526; border-radius:3px; }
+.zoombar.zoomed #zoomthumb { background:var(--gold); }
+.keys.files { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+.keys.files > input, .keys.files > span { grid-column:1 / -1; }
+.keys.files button { width:100%; }
+.modekeys .k4 { grid-column:2; grid-row:2; }
+/* library */
+.libList { height:340px; overflow:auto; margin:8px 0; border:1px solid var(--line, #333); border-radius:4px; background:#0c0c0e; }
+.libRow { display:flex; gap:12px; padding:5px 10px; cursor:pointer; font-size:13px; } .libRow:hover { background:#18181b; }
+.libRow.on { background:#2a2414; color:var(--gold); } .libRow .ln { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .libRow .lt { color:var(--quiet); font-size:12px; }
+.libEmpty { padding:10px; color:var(--quiet); font-size:13px; }
+#library input[type=text], #library textarea { background:var(--btn); color:var(--ink); border:1px solid #3a3a3d; border-radius:4px; padding:5px 8px; font:13px system-ui, Arial, sans-serif; }
+#library .wide { width:100%; box-sizing:border-box; margin-top:8px; display:block; } #library textarea { resize:vertical; }
+#library .keys { margin:8px 0; } #libFilter, #libNewName { width:200px; }
+.side > .logbox { display:flex; flex-direction:column; min-height:140px; } .side > .logbox .log { flex:1 1 0; min-height:140px; }
+.tagList { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; } .tagList span { cursor:pointer; font-size:12px; padding:2px 8px; border:1px solid #3a3a3d; border-radius:10px; color:var(--quiet); } .tagList span:hover, .tagList span.on { color:var(--gold); border-color:var(--gold); }
+#library button.red { height:28px; padding:0 11px; font-size:13px; }
+.modekeys .key { height:58px; justify-content:flex-end; box-sizing:border-box; }
+/* the Rate key padlock, as in S950rx: gold when the key is locked */
+.lockicon { display:inline-flex; align-items:center; justify-content:center; height:28px; padding:0 6px; background:none; border:0; color:var(--quiet); cursor:pointer; }
+.lockicon svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.lockicon rect { fill:var(--panel); } .lockicon .shk-open { display:inline; } .lockicon .shk { display:none; }
+.lockicon[aria-pressed="true"] { color:var(--gold); } .lockicon[aria-pressed="true"] .shk { display:inline; } .lockicon[aria-pressed="true"] .shk-open { display:none; } .lockicon[aria-pressed="true"] rect { fill:currentColor; }
+.lockicon:hover:not(:disabled) { color:var(--ink); border:0; } .lockicon[aria-pressed="true"]:hover:not(:disabled) { color:var(--gold); }
+
+/* Play lights green while playing; Stop flashes red and fades back (as in the S950rx app) */
+#edPlay.playing { border-color:#4fbf6a; box-shadow:0 0 0 1px rgba(79,191,106,.45), 0 0 8px rgba(79,191,106,.35); }
+@keyframes stopfade { from { border-color:#e5484d; box-shadow:0 0 0 1px rgba(229,72,77,.6), 0 0 10px rgba(229,72,77,.55); } to { border-color:var(--edge); box-shadow:none; } }
+#edStop.stopflash { animation:stopfade 1.1s ease-out; }
+
+.work > #library:last-child { margin-bottom:0; flex:1 1 auto; } /* the Library and Activity boxes end level */
+
+.log .detail { display:none; color:var(--quiet); } .log.showDetail .detail { display:block; }
+.logdet { float:right; font-size:11px; letter-spacing:0; text-transform:none; color:var(--quiet); display:inline-flex; gap:5px; align-items:center; cursor:pointer; } .logdet input { margin:0; }
+
+</style>
+</head>
+<body>
+<main>
+  <header><h1>S612 <span>transfer</span></h1></header>
+  <div class="layout">
+  <aside class="side">
+<section class="panel group"><div class="cap"><span>MIDI</span></div>
+      <div class="ports">
+        <label for="out">Out</label><select id="out"></select>
+        <label for="inp">In</label><select id="inp"></select>
+        <label for="ch">Unit</label><span class="unit"><input id="ch" type="number" min="0" max="8" value="0" title="The sampler's MIDI channel number as shown on its display (0 is omni)"><i class="lamp green" id="lampLink" title="Lit when a MIDI link (or the demo unit) is ready"></i></span>
+      </div>
+      <div class="keys">
+        <button id="connect" class="purple" title="Ask the browser for MIDI access, with System Exclusive allowed">Connect</button>
+        <button id="demo" class="purple" title="Try this page against a simulated S612, no hardware needed">Demo unit</button>
+        <button id="readKnobs" class="tan" disabled title="Needs a connected sampler. Read the sampler's settings and move the knobs, sliders and mode lamps to match">Read panel</button>
+      </div>
+    </section>
+<section class="panel group"><div class="cap"><span>Sound</span></div>
+      <div class="keys files">
+        <input id="file" type="file" accept=".wav,.aif,.aiff,.aifc,audio/*" hidden>
+        <button id="open" class="teal" title="Choose a WAV or AIFF file (any rate, mono or stereo, 8, 16, 24 or 32-bit). You can also drop a WAV, AIFF or .QD disk image on this page">Open WAV</button>
+        <button id="saveWav" class="tan" disabled title="Save the sound read from the sampler as a 16-bit WAV at the rate of the Rate key above">Save WAV</button>
+        <button id="saveQd" class="tan" disabled title="Save the sound and the panel settings as a disk image (.QD) for a Gotek or HxC floppy emulator. Put it on the USB stick and Load it on the sampler. The disk check value is copied from a sample image, which the sampler accepts">Save QD</button>
+        <span id="name" class="read"></span>
+      </div>
+      <div class="row">
+        <label class="check" title="Tick to allow Send, Record and Calibrate. The panel controls (mode, sliders, knobs) work without it. Sending REPLACES the whole sample memory (a power cycle or a disk LOAD brings back a saved one). Only do this with a sample you can lose or have saved to disk"><input id="allowWrite" type="checkbox"> Allow writes to sample memory</label>
+        <label class="check" title="After sending, read the whole memory back and compare it with what was sent"><input id="verify" type="checkbox" checked> Verify</label>
+      </div>
+      <div class="keys">
+        <button id="send" class="tan" disabled title="Needs a connected sampler and Allow writes. Sends the rate key as a note, then writes the prepared sound into all 126 blocks of the sampler's memory">Send</button>
+        <button id="read" class="tan" disabled title="Needs a connected sampler. Reads the whole sample memory from the sampler">Read</button>
+        <i class="lamp red" id="lampBusy" title="Lit while the sampler is being written or read"></i>
+      </div>
+    </section>
+<section class="panel group"><div class="cap"><span>Rate</span></div>
+      <div class="row">
+        <label for="key">Key</label><input id="key" type="number" min="36" max="72" value="72" title="MIDI note 36 to 72. The sampler's sampling rate is set by this key: 36 = 4 kHz (8 s), 48 = 8 kHz (4 s), 60 = 16 kHz (2 s), 72 = 32 kHz (1 s), in between for other keys. The sample plays at its original pitch on this key">
+        <button id="keyLock" class="lockicon" aria-pressed="false" title="Lock the Rate key. Unlocked, opening a file or editing picks the best key for its length. Locked, the key stays where you put it, so a short sound can be kept at a deliberately low rate. Best key still works when you press it"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shk" d="M5 7V5a3 3 0 0 1 6 0v2"/><path class="shk-open" d="M5 7V5a3 3 0 0 1 5.6-1.5"/><rect x="3" y="7" width="10" height="7" rx="1.5"/></svg></button>
+        <span id="rateInfo" class="read"></span> <span id="cropHint" class="read" style="color:#f2a23a"></span>
+      </div>
+      <div class="row">
+        <label for="trim">Clock trim %</label><input id="trim" type="number" min="-10" max="10" step="0.1" value="2.5" title="The percent by which the sampler plays slow. Default 2.5, measured on one S612 (about 43 cents flat; tuner then read 1 cent flat). Set 0 for a unit that plays in tune, or measure your own with Calibrate">
+        <label for="heard">Heard Hz</label><input id="heard" type="number" min="100" max="4000" step="0.1" placeholder="1000" title="Or type what a tuner read for key 72 after Calibrate sent the tone (nominal 1000 Hz). The trim is worked out from it">
+      </div>
+      <div class="keys">
+        <button id="best" class="teal" disabled title="Choose the highest rate (best quality) that still fits the whole sound in memory">Best key</button>
+        <button id="calibrate" class="green" disabled title="Needs a connected sampler and Allow writes. Replaces the sample memory with a 1 kHz test tone at key 72, plays that note, listens on the computer's audio input (the sampler's line out, or a microphone) and works out the trim. The sampler must be audible to that input">Calibrate</button>
+      </div>
+    </section>
+<section class="panel group"><div class="cap"><span>Record</span></div>
+      <div class="row">
+        <label for="countIn">Count in (seconds)</label><input id="countIn" style="width:52px" type="number" min="0" max="30" value="6" title="Seconds between sending the rate key and starting playback. Press NEW on the sampler during the count in">
+      </div>
+      <div class="keys">
+        <button id="edPlay" class="teal" disabled title="Play the sound here in the browser as the sampler would (Space). Loops if the mode loops.">▶ Play</button>
+        <button id="edStop" class="teal" disabled title="Stop playing">■ Stop</button>
+        <button id="thru" class="red" disabled title="Needs a connected sampler, Allow writes and an opened WAV. Sends the rate key as a note, counts in while you press NEW on the sampler, plays the sound out of the computer into the sampler's input, waits for it to finish recording, then reads the memory back. The sampler's own converters do the recording, so a loop can sound slightly different from a sent one (Send is exact). Replaces the sample memory">Record</button>
+      </div>
+    </section>
+  <section class="logbox"><div class="cap"><span>Activity</span><label class="logdet" title="Also show the wire-level lines: MIDI notes sent, each setting written, extra settings read"><input type="checkbox" id="logDetails"> Details</label></div><div id="log" class="log"></div></section>
+  </aside>
+  <div class="work">
+  <section class="display">
+    <canvas id="wave" width="1600" height="160" title="Press the spacebar to play. Drag across the waveform to select part of the sound. The edit tools below act on the selection, or on the whole sound if nothing is selected"></canvas>
+    <div class="zoombar" id="zoombar" title="Zoom: scroll the wheel over the waveform. Shift+wheel, or a sideways scroll, moves along the sound. Drag this strip to move along, double-click it to see the whole sound"><div id="zoomthumb"></div></div>
+    <div class="where" id="where"></div><div class="stats" id="stats"></div><div class="status" id="status">Not connected</div>
+  </section>
+<section class="panel group"><div class="cap"><span>Edit</span></div>
+      <div class="row"><span id="selInfo" class="read"></span></div>
+      <div class="keys">
+        <button id="editTrim" class="teal" disabled title="Keep only the selected part of the sound">Trim</button>
+        <button id="editCut" class="teal" disabled title="Delete the selected part and close the gap">Cut</button>
+        <button id="editCrop" class="teal" disabled title="Throw away everything before the start marker and after the end marker">Crop to start/end</button>
+        <button id="editSilence" class="teal" disabled title="Replace the selection (or the whole sound) with silence">Silence</button>
+        <label for="fadeCurveIn">Fade in</label><select id="fadeCurveIn" title="Shape of the fade in, set with the round knob at the left of the waveform (drag it inward). Linear: even. Fast curve: it rises quickly then eases. Slow curve: it holds, then comes in late"><option value="linear">linear</option><option value="fast">fast curve</option><option value="slow">slow curve</option></select>
+        <label for="fadeCurveOut">Fade out</label><select id="fadeCurveOut" title="Shape of the fade out, set with the round knob at the right of the waveform (drag it inward). Linear: even. Fast curve: it drops quickly then eases, like a natural decay. Slow curve: it holds, then goes late"><option value="linear">linear</option><option value="fast">fast curve</option><option value="slow">slow curve</option></select>
+        <button id="editGainUp" class="teal" disabled title="Raise the level of the selection (or the whole sound) by 2 dB, never beyond full scale">Louder</button>
+        <button id="editGainDown" class="teal" disabled title="Lower the level of the selection (or the whole sound) by 2 dB">Quieter</button>
+        <button id="editNorm" class="teal" disabled title="Scale the selection (or the whole sound) so its loudest point uses the full range, for the best use of the sampler's 12 bits. Undo restores it">Normalise</button>
+        <button id="bestMatch" class="teal" disabled title="Precise mode: search near the loop marker for the word where the wave carries on smoothly from the last word of the loop (the End page), and move the loop start there. Works best on tonal sounds">Best match</button>
+        <button id="editUndo" class="tan" disabled title="Undo the last change: an edit, a fade, Reverse, a marker, the key, the mode (Ctrl+Z). Panel knobs are not included">Undo</button>
+      </div>
+    </section>
+<section class="panel group"><div class="cap"><span>Mode</span></div>
+      <div class="modegrid">
+      <div class="modekeys">
+        <div class="key"><i class="lamp" id="lamp2"></i><button id="mode2" title="Play once from Start to End (setting 4 = 2)">One<br>shot</button></div>
+        <div class="key"><i class="lamp" id="lamp3"></i><button id="mode3" title="Repeat the loop (setting 4 = 3). The loop runs from Loop start to End">Looping</button></div>
+        <div class="key"><i class="lamp" id="lamp1"></i><button id="mode1" title="Play forwards then backwards (setting 4 = 1)">Alter-<br>nating</button></div>
+        <div class="key k3 mauve"><i class="lamp" id="lampMono"></i><button id="mono" title="Mono or poly (setting 14: 255 = mono, 0 = poly). The lamp is lit for mono. Send and Record write it as shown, so a new sound is poly">Mono<br>/ poly</button></div>
+        <div class="key k2"><i class="lamp" id="lampReverse"></i><button id="reverse" disabled title="Swap Start and End, so the sound plays backwards (or forwards again). The audio itself is not changed. You can also drag one marker past the other">Reverse</button></div>
+        <div class="key k4 mauve"><i class="lamp" id="lampPrecise"></i><button id="precise" title="Lit (always on at start): Precise. Start and the splice can sit on any word and End is counted in pages from Start. Unlit: Slider mode, as on the unit, where Start, End and the splice move only in the unit's coarse 256-word steps">Precise</button></div>
+      </div>
+      <div class="sliders">
+        <div class="lbl"><span>Start</span></div>
+        <div class="slot" id="slotStart" title="Start point: written by SysEx as you drag (setting 11)"><div class="thumb"></div></div>
+        <div class="scale"><span class="z">0</span><span class="h">100</span></div>
+        <div class="slot" id="slotEnd" title="End point: written by SysEx as you drag (setting 25; setting 13, the length between start and end, is set to match). With End left of Start the sample plays in reverse"><div class="thumb"></div></div>
+        <div class="lbl r"><span>End</span></div>
+      </div>
+      </div>
+    </section>
+<section class="panel group"><div class="cap"><span>Voice</span></div>
+      <div class="knobs" id="knobs"></div>
+    </section>
+<section class="panel group" id="library"><div class="cap"><span>Library</span></div>
+      <div class="keys">
+        <button id="libChoose" class="teal" title="Add a folder on this computer that holds .QD disk images. Its subfolders are included. The browser asks once and remembers the folder. You can add several and switch between them in the list. Nothing is uploaded">Add folder</button>
+        <button id="libRescan" class="tan" disabled title="Look in the folder again (for files added by other programs)">Rescan</button>
+        <select id="libFolder" disabled title="The library folders you have added: pick the one to show"></select>
+        <button id="libForget" class="tan" disabled title="Take this folder out of the list. Its files are not touched">Remove from list</button>
+        <input id="libFilter" type="text" placeholder="Filter by name, tag or note" title="Show only sounds whose name, tags or notes contain this text">
+      </div>
+      <div class="read" id="libInfo"></div>
+      <div id="libList" class="libList"></div>
+      <div class="keys">
+        <input id="libNewName" type="text" placeholder="Name for a new sound" title="Name for the next sound saved to the library. Left empty, the name of the sound in the editor is used">
+        <button id="libSave" class="tan" disabled title="Save the sound in the editor, with the panel settings, as a .QD file in the library folder">Save to library</button>
+        <button id="libFetch" class="tan" disabled title="Read the sound from the sampler and save it in the library (needs the sampler connected)">Fetch from sampler</button>
+        <button id="libImport" class="tan" disabled title="Copy .QD files from anywhere on this computer into the library folder (choose several at once)">Import files</button>
+        <button id="libExport" class="tan" disabled title="Copy the listed sounds, and the notes, into another folder">Export all</button>
+        <input id="libImportFile" type="file" accept=".qd,.QD" multiple hidden>
+      </div>
+      <div id="libEdit" hidden>
+        <div class="lbl"><span id="libTitle"></span></div>
+        <div class="keys">
+          <button id="libOpen" class="teal" disabled title="Open this sound in the editor. Nothing is sent to the sampler">Open</button>
+          <button id="libListen" class="teal" disabled title="Hold to play this sound here without opening it in the editor. One shot plays once; Looping repeats the loop; Alternating goes forwards and back. Plays at the rate key stored with it">Audition (hold)</button>
+          <button id="libSend" class="tan" disabled title="Open this sound and send it to the sampler (needs the sampler connected and Allow writes ticked)">Send to sampler</button>
+          <button id="libDelete" class="red" disabled title="Delete this .QD file from the library folder (asks first). The file is removed from the folder itself">Delete</button>
+        </div>
+        <input id="libTags" type="text" placeholder="Tags, separated by commas" class="wide" title="Tags for this sound, separated by commas. Saved in the library folder as you type">
+        <div id="libTagList" class="tagList" title="Every tag used in the library: click one to filter the list"></div>
+        <textarea id="libNotes" rows="5" placeholder="Notes" class="wide"></textarea>
+        <div id="libSaved" class="read"></div>
+      </div>
+    </section>
+  </div>
+  </div>
+</main>
+<footer class="ver"><span class="ver" title="Build 133">v0.1</span></footer>
+<script type="module">
+// src/s612.js
+var TYPE = { WAVE: 33, SETTINGS: 65 };
+var CMD = { SELECT: 64, REQUEST: 65, NEXT: 66, DATA: 68, END: 69, ACK: 77, NAK: 78 };
+var BLOCK_WORDS = 256;
+var BLOCKS = 126;
+var hex = (b) => [...b].map((x) => x.toString(16).padStart(2, "0")).join(" ");
+var toHex = hex;
+var requestSettings = (ch2 = 0) => Uint8Array.of(240, 71, ch2, CMD.REQUEST, 32, TYPE.SETTINGS, 247);
+var requestFirstBlock = (ch2 = 0) => Uint8Array.of(240, 71, ch2, CMD.REQUEST, 32, TYPE.WAVE, 247);
+var requestNextBlock = (ch2 = 0) => Uint8Array.of(240, 71, ch2, CMD.NEXT, 32, TYPE.WAVE, 247);
+function splitSysex(bytes) {
+  const messages = [];
+  let start = -1;
+  let i = 0;
+  for (; i < bytes.length; i++) {
+    if (bytes[i] === 240) start = i;
+    else if (bytes[i] === 247 && start >= 0) {
+      messages.push(bytes.slice(start, i + 1));
+      start = -1;
+    }
+  }
+  return { messages, rest: start >= 0 ? bytes.slice(start) : new Uint8Array(0) };
+}
+function parseHeader(msg) {
+  if (msg.length < 7 || msg[0] !== 240 || msg[1] !== 71 || msg[msg.length - 1] !== 247) return null;
+  if (msg[4] !== 32) return null;
+  return { channel: msg[2], cmd: msg[3], type: msg[5], payload: msg.slice(6, msg.length - 1) };
+}
+function decodeWord(b1, b2) {
+  const stored = (b2 & 127) << 1 | b1 >> 6 & 1;
+  const low = b1 >> 2 & 15;
+  return stored << 4 | low;
+}
+function encodeWord(w) {
+  const stored = w >> 4 & 255;
+  const low = w & 15;
+  return [(stored & 1) << 6 | low << 2, stored >> 1 & 127];
+}
+function decodeWords(payload) {
+  const out2 = new Uint16Array(payload.length >> 1);
+  for (let i = 0; i < out2.length; i++) out2[i] = decodeWord(payload[2 * i], payload[2 * i + 1]);
+  return out2;
+}
+function decodeSettings(payload) {
+  const n = payload.length >> 1;
+  const out2 = new Uint8Array(n);
+  for (let i = 0; i < n; i++) out2[i] = payload[2 * i] & 127 | (payload[2 * i + 1] & 1) << 7;
+  return out2;
+}
+var REST = 2040;
+function wavFromWords(words, rate) {
+  const n = words.length, buf = new Uint8Array(44 + n * 2), v = new DataView(buf.buffer);
+  const tag = (o, s) => {
+    for (let i = 0; i < 4; i++) buf[o + i] = s.charCodeAt(i);
+  };
+  tag(0, "RIFF");
+  v.setUint32(4, 36 + n * 2, true);
+  tag(8, "WAVE");
+  tag(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  tag(36, "data");
+  v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-32768, Math.min(32767, (words[i] - REST) * 16)), true);
+  return buf;
+}
+var selectBlock = (ch2, block) => Uint8Array.of(240, 71, ch2, CMD.SELECT, 32, TYPE.WAVE, block, 247);
+function dataBlock(ch2, words) {
+  if (words.length !== BLOCK_WORDS) throw new Error(`a block is ${BLOCK_WORDS} words`);
+  const out2 = [240, 71, ch2, CMD.DATA, 32, TYPE.WAVE];
+  for (const w of words) out2.push(...encodeWord(w & 4095));
+  out2.push(247);
+  return Uint8Array.from(out2);
+}
+var isAck = (msg) => parseHeader(msg)?.cmd === CMD.ACK;
+var noteOn = (chan, note, vel = 100) => Uint8Array.of(144 | chan - 1 & 15, note & 127, vel & 127);
+var noteOff = (chan, note) => Uint8Array.of(128 | chan - 1 & 15, note & 127, 0);
+function settingsMessage(ch2, values) {
+  if (values.length !== 32) throw new Error("settings are 32 values");
+  const out2 = [240, 71, ch2, CMD.DATA, 32, TYPE.SETTINGS];
+  for (const v of values) out2.push(v & 127, v >> 7 & 1);
+  out2.push(247);
+  return Uint8Array.from(out2);
+}
+
+// src/audio.js
+var MEMORY_WORDS = BLOCKS * BLOCK_WORDS;
+var keyRate = (key2) => 4e3 * 2 ** ((key2 - 36) / 12);
+function bestKey(seconds) {
+  for (let k = 72; k >= 36; k--) if (MEMORY_WORDS / keyRate(k) >= seconds) return k;
+  return 36;
+}
+function parseWav(bytes) {
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const tag = (o) => String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
+  if (bytes.length >= 12 && tag(0) === "FORM" && (tag(8) === "AIFF" || tag(8) === "AIFC")) return parseAiff(bytes);
+  if (bytes.length < 12 || tag(0) !== "RIFF" || tag(8) !== "WAVE") throw new Error("not a WAV or AIFF file");
+  let fmt = null, data = null, root = null;
+  for (let o = 12; o + 8 <= bytes.length; ) {
+    const id = tag(o), size = v.getUint32(o + 4, true), body = o + 8;
+    if (id === "fmt ") fmt = { tag: v.getUint16(body, true), ch: v.getUint16(body + 2, true), rate: v.getUint32(body + 4, true), bits: v.getUint16(body + 14, true) };
+    if (id === "smpl" && size >= 20) root = v.getUint32(body + 12, true);
+    if (id === "data" && !data) data = { at: body, size: Math.min(size, bytes.length - body) };
+    o = body + size + (size & 1);
+  }
+  if (!fmt || !data) throw new Error("WAV has no fmt or data");
+  const { ch: ch2, rate, bits } = fmt;
+  const bps = bits >> 3, frames = Math.floor(data.size / (bps * ch2));
+  const isFloat = fmt.tag === 3;
+  const out2 = Array.from({ length: ch2 }, () => new Float32Array(frames));
+  for (let i = 0; i < frames; i++) for (let c = 0; c < ch2; c++) {
+    const p = data.at + (i * ch2 + c) * bps;
+    let x;
+    if (isFloat && bits === 32) x = v.getFloat32(p, true);
+    else if (isFloat && bits === 64) x = v.getFloat64(p, true);
+    else if (bits === 8) x = (bytes[p] - 128) / 128;
+    else if (bits === 16) x = v.getInt16(p, true) / 32768;
+    else if (bits === 24) x = ((bytes[p] | bytes[p + 1] << 8 | bytes[p + 2] << 16) << 8 >> 8) / 8388608;
+    else if (bits === 32) x = v.getInt32(p, true) / 2147483648;
+    else throw new Error(`${bits}-bit WAV not supported`);
+    out2[c][i] = x;
+  }
+  return { rate, channels: out2, root: root !== null && root <= 127 ? root : null };
+}
+function parseAiff(bytes) {
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const tag = (o) => String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
+  let comm = null, ssnd = null, root = null;
+  for (let o = 12; o + 8 <= bytes.length; ) {
+    const id = tag(o), size = v.getUint32(o + 4), body = o + 8;
+    if (id === "COMM" && size >= 18) {
+      const exp = v.getUint16(body + 8) & 32767, hi = v.getUint32(body + 10), lo = v.getUint32(body + 14);
+      comm = { ch: v.getUint16(body), frames: v.getUint32(body + 2), bits: v.getUint16(body + 6), rate: Math.round((hi * 2 ** 32 + lo) * 2 ** (exp - 16383 - 63)), comp: size >= 22 ? tag(body + 18) : "NONE" };
+    }
+    if (id === "INST" && size >= 1 && bytes[body] <= 127) root = bytes[body];
+    if (id === "SSND" && !ssnd) {
+      const off = v.getUint32(body);
+      ssnd = { at: body + 8 + off, size: Math.min(size - 8 - off, bytes.length - body - 8 - off) };
+    }
+    o = body + size + (size & 1);
+  }
+  if (!comm || !ssnd) throw new Error("AIFF has no COMM or SSND");
+  const { ch: ch2, bits, rate, comp } = comm, le = comp === "sowt", float = comp === "fl32" || comp === "FL32" || comp === "fl64" || comp === "FL64";
+  if (!["NONE", "none", "sowt", "twos", "fl32", "FL32", "fl64", "FL64"].includes(comp)) throw new Error(`AIFF compression ${comp} is not supported`);
+  if (!(rate > 0) || !ch2) throw new Error("AIFF has a bad format chunk");
+  const bps = bits + 7 >> 3, frames = Math.min(comm.frames, Math.floor(ssnd.size / (bps * ch2)));
+  const out2 = Array.from({ length: ch2 }, () => new Float32Array(frames));
+  for (let i = 0; i < frames; i++) for (let c = 0; c < ch2; c++) {
+    const p = ssnd.at + (i * ch2 + c) * bps;
+    let x;
+    if (float && bits === 32) x = v.getFloat32(p, le);
+    else if (float && bits === 64) x = v.getFloat64(p, le);
+    else if (bits === 8) x = v.getInt8(p) / 128;
+    else if (bits === 16) x = v.getInt16(p, le) / 32768;
+    else if (bits === 24) x = le ? ((bytes[p] | bytes[p + 1] << 8 | bytes[p + 2] << 16) << 8 >> 8) / 8388608 : ((bytes[p] << 16 | bytes[p + 1] << 8 | bytes[p + 2]) << 8 >> 8) / 8388608;
+    else if (bits === 32) x = v.getInt32(p, le) / 2147483648;
+    else throw new Error(`${bits}-bit AIFF not supported`);
+    out2[c][i] = x;
+  }
+  return { rate, channels: out2, root };
+}
+function toMono(channels) {
+  if (channels.length === 1) return channels[0];
+  const n = channels[0].length, m = new Float32Array(n);
+  for (const c of channels) for (let i = 0; i < n; i++) m[i] += c[i] / channels.length;
+  return m;
+}
+function resample(x, from, to) {
+  if (Math.abs(from - to) < 1e-6) return Float32Array.from(x);
+  const ratio = to / from, n = Math.max(1, Math.floor(x.length * ratio)), out2 = new Float32Array(n);
+  const cut = Math.min(1, ratio) * 0.95, half = Math.ceil(16 / Math.min(1, ratio));
+  for (let i = 0; i < n; i++) {
+    const c = i / ratio, lo = Math.max(0, Math.floor(c) - half), hi = Math.min(x.length - 1, Math.floor(c) + half);
+    let s = 0, wsum = 0;
+    for (let j = lo; j <= hi; j++) {
+      const d = j - c, a = Math.PI * d * cut, sinc = d === 0 ? cut : Math.sin(a) / (Math.PI * d);
+      const w = 0.5 + 0.5 * Math.cos(Math.PI * d / (half + 1));
+      s += x[j] * sinc * w;
+      wsum += sinc * w;
+    }
+    out2[i] = wsum ? s / wsum : 0;
+  }
+  return out2;
+}
+function toWords(x, { normalise = true } = {}) {
+  let peak = 0;
+  for (const s of x) peak = Math.max(peak, Math.abs(s));
+  const g = normalise && peak > 0 ? 0.98 / peak : 1;
+  const w = new Uint16Array(MEMORY_WORDS).fill(REST);
+  for (let i = 0; i < Math.min(x.length, MEMORY_WORDS); i++) w[i] = Math.max(0, Math.min(4095, Math.round(REST + x[i] * g * 2040)));
+  return w;
+}
+function prepare(mono2, rate, key2, { normalise = true, trimPct = 0 } = {}) {
+  const target = keyRate(key2) * (1 - trimPct / 100);
+  const r = resample(mono2, rate, target);
+  return { words: toWords(r, { normalise }), used: Math.min(r.length, MEMORY_WORDS), full: r.length, truncated: r.length > MEMORY_WORDS, seconds: r.length / target };
+}
+
+// src/pitch.js
+function detectHz(buf, rate, minHz = 200, maxHz = 4e3) {
+  let rms = 0;
+  for (const s of buf) rms += s * s;
+  rms = Math.sqrt(rms / buf.length);
+  if (rms < 5e-3) return null;
+  const lo = Math.floor(rate / maxHz), hi = Math.ceil(rate / minHz), n = buf.length - hi, c = new Float64Array(hi + 2);
+  for (let L = lo - 1; L <= hi + 1; L++) {
+    let s = 0;
+    for (let i = 0; i < n; i++) s += buf[i] * buf[i + L];
+    c[L] = s;
+  }
+  let best = lo;
+  for (let L = lo; L <= hi; L++) if (c[L] > c[best]) best = L;
+  for (let L = lo + 1; L < best; L++) if (c[L] > c[L - 1] && c[L] >= c[L + 1] && c[L] > 0.9 * c[best]) {
+    best = L;
+    break;
+  }
+  const a = c[best - 1], b = c[best], d = c[best + 1], den = a - 2 * b + d;
+  const shift = den ? 0.5 * (a - d) / den : 0;
+  return rate / (best + shift);
+}
+var median = (a) => {
+  const s = [...a].sort((x, y) => x - y);
+  return s.length ? s[s.length >> 1] : null;
+};
+var trimFromHz = (heard, nominal = 1e3) => (1 - heard / nominal) * 100;
+
+// src/virtual-s612.js
+var VirtualS612 = class {
+  constructor({ channel = 0, settings = null, words = null } = {}) {
+    this.channel = channel;
+    this.settings = settings ?? Uint8Array.from({ length: 32 }, (_, i) => i * 7 + 3 & 255);
+    this.words = words ?? new Uint16Array(BLOCKS * BLOCK_WORDS).map((_, i) => i * 37 & 4095);
+    this.cursor = 0;
+    this.writeAt = null;
+    this.log = [];
+  }
+  // Feed one complete message (with F0 and F7); returns an array of reply messages.
+  receive(msg) {
+    this.log.push(Array.from(msg));
+    if (msg.length < 7 || msg[0] !== 240 || msg[1] !== 71 || msg[msg.length - 1] !== 247 || msg[4] !== 32) return [];
+    const ch2 = msg[2], cmd = msg[3], type = msg[5];
+    if (this.channel !== 0 && ch2 !== this.channel - 1 && ch2 !== this.channel) return [];
+    const reply = (c, t, payload = []) => Uint8Array.from([240, 71, this.channel === 0 ? 0 : ch2, c, 32, t, ...payload, 247]);
+    if (cmd === CMD.REQUEST && type === TYPE.SETTINGS) {
+      const p = [];
+      for (const b of this.settings) p.push(b & 127, b >> 7 & 1);
+      return [reply(CMD.DATA, TYPE.SETTINGS, p)];
+    }
+    if ((cmd === CMD.REQUEST || cmd === CMD.NEXT) && type === TYPE.WAVE) {
+      if (cmd === CMD.REQUEST) this.cursor = 0;
+      if (this.cursor >= BLOCKS) return [reply(CMD.END, TYPE.WAVE)];
+      const p = [];
+      for (let i = 0; i < BLOCK_WORDS; i++) p.push(...encodeWord(this.words[this.cursor * BLOCK_WORDS + i]));
+      this.cursor++;
+      return [reply(CMD.DATA, TYPE.WAVE, p)];
+    }
+    if (cmd === CMD.SELECT && type === TYPE.WAVE && msg.length === 8) {
+      if (msg[6] < BLOCKS) {
+        this.writeAt = msg[6] * BLOCK_WORDS;
+        return [reply(CMD.ACK, TYPE.WAVE)];
+      }
+      this.writeAt = null;
+      return [reply(CMD.NAK, TYPE.WAVE)];
+    }
+    if (cmd === CMD.DATA && type === TYPE.SETTINGS && msg.length === 6 + 64 + 1) {
+      for (let i = 0; i < 32; i++) this.settings[i] = msg[6 + 2 * i] & 127 | (msg[7 + 2 * i] & 1) << 7;
+      return [reply(CMD.ACK, TYPE.SETTINGS)];
+    }
+    if (cmd === CMD.DATA && type === TYPE.WAVE && this.writeAt !== null) {
+      const p = msg.slice(6, msg.length - 1);
+      for (let i = 0; i + 1 < p.length && this.writeAt < this.words.length; i += 2) this.words[this.writeAt++] = decodeWord(p[i], p[i + 1]);
+      return [reply(CMD.ACK, TYPE.WAVE)];
+    }
+    return [];
+  }
+};
+
+// src/knobs.js
+var NS = "http://www.w3.org/2000/svg";
+var el = (n, a = {}, p) => {
+  const e = document.createElementNS(NS, n);
+  for (const k in a) e.setAttribute(k, a[k]);
+  p && p.append(e);
+  return e;
+};
+var uid = 0;
+function knob(host, opts) {
+  const { title, lo, hi, cap, hint = "", fmt, onInput } = opts;
+  const w = document.createElement("div");
+  w.className = "knob";
+  w.title = hint;
+  w.innerHTML = `<div class="t">${title}</div>`;
+  const s = el("svg", { width: 116, height: 108, viewBox: "-58 -54 116 108" });
+  w.append(s);
+  const id = `kg${++uid}`, defs = el("defs", {}, s);
+  const rg = el("radialGradient", { id: id + "b", cx: "40%", cy: "35%" }, defs);
+  el("stop", { offset: "0", "stop-color": "#2b2b2d" }, rg);
+  el("stop", { offset: "1", "stop-color": "#050505" }, rg);
+  const cg = el("radialGradient", { id: id + "c", cx: "35%", cy: "30%" }, defs);
+  el("stop", { offset: "0", "stop-color": "#fff", "stop-opacity": ".38" }, cg);
+  el("stop", { offset: ".5", "stop-color": "#fff", "stop-opacity": "0" }, cg);
+  for (let i = 0; i <= 10; i++) {
+    const a = (-135 + i * 27) * Math.PI / 180;
+    el("circle", { cx: Math.sin(a) * 47, cy: -Math.cos(a) * 47, r: i % 5 === 0 ? 2.1 : 1.5, fill: "#c9a45c", opacity: 0.9 }, s);
+  }
+  el("circle", { r: 36, fill: `url(#${id}b)`, stroke: "#000", "stroke-width": 2 }, s);
+  el("circle", { r: 28, fill: "#262628", stroke: "#0a0a0a", "stroke-width": 1.5 }, s);
+  el("circle", { r: 28, fill: "none", stroke: "#4a4a4d", "stroke-width": 7, "stroke-dasharray": "2.2 2.6", opacity: 0.75 }, s);
+  const rot = el("g", {}, s);
+  el("circle", { r: 21, fill: cap, stroke: "rgba(0,0,0,.45)", "stroke-width": 1.2 }, rot);
+  el("circle", { r: 21, fill: `url(#${id}c)` }, rot);
+  el("line", { x1: 0, y1: -2, x2: 0, y2: -32, stroke: "#101010", "stroke-width": 4.2 }, rot);
+  el("line", { x1: 1.4, y1: -2, x2: 1.4, y2: -31, stroke: "rgba(255,255,255,.28)", "stroke-width": 1 }, rot);
+  const r = document.createElement("div");
+  r.className = "r";
+  r.innerHTML = `<span>${lo}</span><span>${hi}</span>`;
+  w.append(r);
+  const v = document.createElement("div");
+  v.className = "v";
+  w.append(v);
+  let val = 0.5;
+  const draw2 = () => {
+    rot.setAttribute("transform", `rotate(${-135 + val * 270})`);
+    v.textContent = fmt ? fmt(val) : "";
+  };
+  const move = (x) => {
+    val = Math.max(0, Math.min(1, x));
+    draw2();
+    onInput?.(val);
+  };
+  draw2();
+  let y0 = null, v0 = 0;
+  w.onpointerdown = (e) => {
+    y0 = e.clientY;
+    v0 = val;
+    w.setPointerCapture(e.pointerId);
+  };
+  w.onpointermove = (e) => {
+    if (y0 !== null) move(v0 + (y0 - e.clientY) / 160);
+  };
+  w.onpointerup = w.onpointercancel = () => {
+    y0 = null;
+  };
+  w.tabIndex = 0;
+  w.setAttribute("role", "slider");
+  w.setAttribute("aria-label", title);
+  w.onkeydown = (e) => {
+    const d = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key];
+    if (d !== void 0) {
+      e.preventDefault();
+      move(val + d * (e.shiftKey ? 0.1 : 0.01));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      move(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      move(1);
+    }
+  };
+  w.onwheel = (e) => {
+    e.preventDefault();
+    move(val - Math.sign(e.deltaY) * 0.04);
+  };
+  host.append(w);
+  return { get value() {
+    return val;
+  }, set(x) {
+    val = Math.max(0, Math.min(1, x));
+    draw2();
+  }, el: w };
+}
+
+// src/qd.js
+var WORDS = 32256;
+var SETTINGS = 32;
+var SETTINGS_AT = 19161;
+var WORDS_AT = 19228;
+var TRAILER_AT = WORDS_AT + WORDS * 4;
+var END_AT = TRAILER_AT + 14;
+var TEMPLATE_B64 = "eNrt0DEOglAMBuBGvQAmLs6ysHkHHWSD8A4GmzuL7wJeTzDRRRMOwPf9SdOk7dKIaC7Bau0i7sdtPM4R1+fGP1amAAAAAAAAAAAAAAAAAAAAAGBRBuC/uv/N/nZqurprx9zmfMndZ3doUzqUj6mrplKlNN834zDP2vc+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMCS+lamuv+mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABa8AFerZZ4=";
+var tpl = null;
+async function template() {
+  if (tpl) return tpl;
+  const bin = Uint8Array.from(atob(TEMPLATE_B64), (c) => c.charCodeAt(0));
+  const ds = new Blob([bin]).stream().pipeThrough(new DecompressionStream("deflate"));
+  tpl = new Uint8Array(await new Response(ds).arrayBuffer());
+  return tpl;
+}
+var nibOf = (b) => (b >> 6 & 1) << 3 | (b >> 4 & 1) << 2 | (b >> 2 & 1) << 1 | b & 1;
+function encode(nibs, lastCtx) {
+  const out2 = new Uint8Array(nibs.length);
+  for (let k = 0; k < nibs.length; k++) {
+    const nb = nibs[k], a = nb >> 3 & 1, b = nb >> 2 & 1, c = nb >> 1 & 1, d = nb & 1;
+    const nxt = k + 1 < nibs.length ? nibs[k + 1] & 1 : lastCtx;
+    const cells = [a === 0 && nxt === 0 ? 1 : 0, a, a === 0 && b === 0 ? 1 : 0, b, b === 0 && c === 0 ? 1 : 0, c, c === 0 && d === 0 ? 1 : 0, d];
+    let v = 0;
+    for (const x of cells) v = v << 1 | x;
+    out2[k] = v;
+  }
+  return out2;
+}
+var wordNibs = (w) => [(w & 3) << 2, w >> 2 & 15, w >> 6 & 15, w >> 10 & 15];
+function settingsBits(d, at) {
+  let s = "";
+  for (let i = 66; i >= 0; i--) s += nibOf(d[at + i]).toString(2).padStart(4, "0");
+  return s;
+}
+async function templateSettings() {
+  return importQD(await template()).settings;
+}
+async function exportQD(words, settings) {
+  if (words.length !== WORDS) throw new Error(`a QD image holds ${WORDS} words, not ${words.length}`);
+  if (settings.length !== SETTINGS) throw new Error(`the sampler has ${SETTINGS} settings, not ${settings.length}`);
+  const t = await template(), bits0 = settingsBits(t, SETTINGS_AT);
+  let bits = bits0.slice(0, 2);
+  for (let i = SETTINGS - 1; i >= 0; i--) bits += (settings[i] & 255).toString(2).padStart(8, "0");
+  bits += 165 .toString(2).padStart(8, "0") + bits0.slice(266);
+  const nibs = [nibOf(t[SETTINGS_AT - 1])];
+  for (let i = 66; i >= 0; i--) nibs.push(parseInt(bits.slice(4 * i, 4 * i + 4), 2));
+  for (let i = 0; i < WORDS; i++) nibs.push(...wordNibs(words[i] & 4095));
+  for (let i = 0; i < 14; i++) nibs.push(nibOf(t[TRAILER_AT + i]));
+  const enc = encode(nibs, t[END_AT] & 1), o = Uint8Array.from(t);
+  o.set(enc, SETTINGS_AT - 1);
+  return o;
+}
+var SYNC_CELLS = Array.from({ length: 8 }, () => "0100101010010001").join("");
+var bitString = (d) => {
+  const a = new Array(d.length);
+  for (let i = 0; i < d.length; i++) a[i] = d[i].toString(2).padStart(8, "0");
+  return a.join("");
+};
+function importQD(src2) {
+  const bits = bitString(src2);
+  const run = bits.indexOf(SYNC_CELLS, 512 * 8);
+  if (run < 0) throw new Error("not an S612 image: no sample sync found");
+  let end = run + SYNC_CELLS.length;
+  while (bits.startsWith("0100101010010001", end)) end += 16;
+  const p = (run + 1) % 2;
+  let D = "";
+  {
+    const a = [];
+    for (let i = p; i < bits.length; i += 2) a.push(bits[i]);
+    D = a.join("");
+  }
+  const se = Math.ceil((end - p) / 2), nb = (i) => parseInt(D.substr(i, 4), 2);
+  const rawAt = (i) => nb(i) | nb(i + 4) << 4 | nb(i + 8) << 8 | nb(i + 12) << 12;
+  const rough = (w0) => {
+    let s = 0, last = rawAt(w0 + 16 * 2e3);
+    for (let k = 1; k < 1200; k++) {
+      const v = rawAt(w0 + 16 * (2e3 + k));
+      s += Math.abs(v - last);
+      last = v;
+    }
+    return s;
+  };
+  try {
+    return importOffbeat(D, se, rawAt, rough);
+  } catch {
+  }
+  let best = null;
+  for (let w = se + 230; w < se + 330; w++) {
+    if (w + WORDS * 16 + 16 > D.length) break;
+    for (const trail of [2, 0]) {
+      const bs = w - 268;
+      let rs = "";
+      for (let j = 66; j >= 0; j--) rs += D.substr(bs + 4 * j, 4);
+      if (rs.substr(260 - trail, 8) !== "10100101") continue;
+      const r = rough(w);
+      if (!best || r < best.r) best = { w, trail, rs, r };
+    }
+  }
+  if (!best) return importOffbeat(D, se, rawAt, rough);
+  const o = 4 - best.trail, settings = new Uint8Array(SETTINGS);
+  for (let i = 0; i < SETTINGS; i++) settings[SETTINGS - 1 - i] = parseInt(best.rs.substr(o + 8 * i, 8), 2);
+  if (settings[26] !== settings[2] || settings[27] !== settings[3]) {
+    try {
+      return importOffbeat(D, se, rawAt, rough);
+    } catch {
+    }
+  }
+  const sh = best.trail ? 2 : 0;
+  const words = new Uint16Array(WORDS);
+  for (let i = 0; i < WORDS; i++) {
+    const v = rawAt(best.w + 16 * i) >> sh;
+    words[i] = v > 4095 ? i ? words[i - 1] : 2040 : v;
+  }
+  return { words, settings };
+}
+function importOffbeat(D, se, rawAt, rough) {
+  let settings = null, best = null;
+  const cands = [];
+  for (let d = -24; d <= 24; d++) for (let o = 0; o <= 4; o++) {
+    let rs = "";
+    for (let j = 66; j >= 0; j--) rs += D.substr(se + d + 4 * j, 4);
+    const st = new Uint8Array(SETTINGS);
+    for (let i = 0; i < SETTINGS; i++) st[SETTINGS - 1 - i] = parseInt(rs.substr(o + 8 * i, 8), 2);
+    const w = se + d + 268;
+    if (w + WORDS * 16 + 16 > D.length) continue;
+    const m = rs.substr(256 + o, 8);
+    let h = 0;
+    for (let k = 0; k < 8; k++) if (m[k] !== "10100101"[k]) h++;
+    if (!(st[25] >= 130 && ((st[1] << 8 | st[0]) + (st[3] << 8 | st[2]) === (st[25] - 1 << 8 | 255) || h === 0 && !(st[7] | st[8] | st[9] | st[10]) && st[12] === 255))) continue;
+    cands.push({ w, r: rough(w), st, h: h * 100 + Math.abs(d) * 5 + o });
+  }
+  const floor = Math.min(...cands.map((c) => c.r));
+  for (const c of cands) if (c.r <= floor * 1.05 + 50 && (!best || c.h < best.h)) best = c;
+  if (best) settings = best.st;
+  if (!settings) throw new Error("this does not look like an S612 sound: no settings block that adds up (it may be an image from another machine)");
+  const raw = new Uint16Array(WORDS);
+  let low = 0;
+  for (let i = 0; i < WORDS; i++) {
+    raw[i] = rawAt(best.w + 16 * i);
+    if (i < WORDS - 1) low |= raw[i] & 7;
+  }
+  const sh = !(low & 1) && !(low & 2) && !(low & 4) ? 3 : !(low & 1) && !(low & 2) ? 2 : !(low & 1) ? 1 : 0;
+  const words = new Uint16Array(WORDS);
+  for (let i = 0; i < WORDS; i++) {
+    const v = raw[i] >> sh;
+    words[i] = v > 4095 ? i ? words[i - 1] : 2040 : v;
+  }
+  if (settings[11] > settings[25] && !((settings[5] | settings[6]) & 32)) settings[11] = Math.max(130, settings[25] - 1 - settings[13]);
+  return { words, settings };
+}
+
+// src/library.js
+var INDEX = "s612-library.json";
+var DB = "s612-library";
+var STORE = "handles";
+var $ = (id) => document.getElementById(id);
+var idb = () => new Promise((res, rej) => {
+  const r = indexedDB.open(DB, 1);
+  r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+  r.onsuccess = () => res(r.result);
+  r.onerror = () => rej(r.error);
+});
+var putKey = async (k, v) => {
+  try {
+    const d = await idb();
+    d.transaction(STORE, "readwrite").objectStore(STORE).put(v, k);
+  } catch {
+  }
+};
+var getKey = async (k) => {
+  try {
+    const d = await idb();
+    return await new Promise((res) => {
+      const q = d.transaction(STORE).objectStore(STORE).get(k);
+      q.onsuccess = () => res(q.result ?? null);
+      q.onerror = () => res(null);
+    });
+  } catch {
+    return null;
+  }
+};
+var stem = (n) => n.replace(/\.qd$/i, "");
+var safe = (n) => stem(n).replace(/[\\/:*?"<>|]/g, "_").trim().slice(0, 80) || "sound";
+function initLibrary(hooks) {
+  let dir = null, index = { version: 1, files: {} }, names = [], sel2 = null, saveT = null;
+  const supported = typeof window.showDirectoryPicker === "function";
+  const note = (t) => {
+    $("libInfo").textContent = t;
+  };
+  const meta = (n) => index.files[n] ??= { notes: "", tags: [], key: null };
+  async function readIndex() {
+    index = { version: 1, files: {} };
+    try {
+      const f = await (await dir.getFileHandle(INDEX)).getFile();
+      const j = JSON.parse(await f.text());
+      if (j && typeof j.files === "object") index = { version: 1, files: j.files };
+    } catch {
+    }
+  }
+  async function writeFile(handleDir, name, data) {
+    const fh = await handleDir.getFileHandle(name, { create: true }), w = await fh.createWritable();
+    await w.write(data);
+    await w.close();
+  }
+  const saveIndexNow = async () => {
+    if (!dir) return;
+    try {
+      await writeFile(dir, INDEX, JSON.stringify(index, null, 1));
+      $("libSaved").textContent = "Notes and tags saved in the library folder";
+    } catch (e) {
+      hooks.log("bad", `Library: could not save the notes (${e.message})`);
+    }
+  };
+  const saveIndex = () => {
+    $("libSaved").textContent = "Saving...";
+    clearTimeout(saveT);
+    saveT = setTimeout(saveIndexNow, 400);
+  };
+  async function scan() {
+    names = [];
+    const walk = async (d, prefix, depth) => {
+      for await (const [n, h] of d.entries()) {
+        if (h.kind === "file" && /\.qd$/i.test(n)) names.push(prefix + n);
+        else if (h.kind === "directory" && depth < 5 && !n.startsWith(".")) await walk(h, prefix + n + "/", depth + 1);
+      }
+    };
+    try {
+      await walk(dir, "", 0);
+    } catch (e) {
+      names = [];
+      sel2 = null;
+      render();
+      const m = `Could not read the folder (${e.name === "NotFoundError" ? "it may have been moved or deleted" : e.message}). Add it again, or choose another folder.`;
+      note(m);
+      hooks.log("bad", `Library: ${m}`);
+      return false;
+    }
+    names.sort((a, b) => a.localeCompare(b, void 0, { numeric: true, sensitivity: "base" }));
+    if (sel2 && !names.includes(sel2)) sel2 = null;
+    render();
+  }
+  let folders = [], cur = -1;
+  const sameDir = async (a, b) => {
+    try {
+      return await a.isSameEntry(b);
+    } catch {
+      return a.name === b.name;
+    }
+  };
+  const saveFolders = () => {
+    putKey("dirs", folders.map((f) => f.handle));
+    putKey("cur", cur);
+  };
+  function drawFolders() {
+    const sel0 = $("libFolder");
+    sel0.textContent = "";
+    folders.forEach((f, i) => {
+      const o = document.createElement("option");
+      o.value = i;
+      o.textContent = f.handle.name + (f.ok ? "" : " (allow access)");
+      sel0.append(o);
+    });
+    if (cur >= 0) sel0.value = cur;
+    sel0.disabled = !folders.length;
+    $("libForget").disabled = cur < 0;
+  }
+  async function showFolder(i) {
+    const f = folders[i];
+    if (!f) return;
+    cur = i;
+    if (!f.ok) {
+      try {
+        f.ok = await f.handle.requestPermission({ mode: "readwrite" }) === "granted";
+      } catch {
+        f.ok = false;
+      }
+    }
+    drawFolders();
+    saveFolders();
+    if (!f.ok) {
+      dir = null;
+      names = [];
+      sel2 = null;
+      render();
+      note(`Access to ${f.handle.name} was not allowed. Choose it again to allow`);
+      return;
+    }
+    dir = f.handle;
+    await readIndex();
+    await scan();
+    drawFolders();
+    note(`${names.length} sound${names.length === 1 ? "" : "s"} in ${dir.name}, including its subfolders`);
+  }
+  async function useFolder(h) {
+    let i = -1;
+    for (let k = 0; k < folders.length; k++) if (await sameDir(folders[k].handle, h)) {
+      i = k;
+      break;
+    }
+    if (i < 0) {
+      folders.push({ handle: h, ok: true });
+      i = folders.length - 1;
+    } else folders[i].ok = true;
+    await showFolder(i);
+  }
+  const dirOf = async (path, create = false) => {
+    let d = dir;
+    const parts = path.split("/");
+    const file = parts.pop();
+    for (const q of parts) d = await d.getDirectoryHandle(q, { create });
+    return [d, file];
+  };
+  const matches = (n) => {
+    const q = $("libFilter").value.trim().toLowerCase();
+    if (!q) return true;
+    const m = index.files[n] || {};
+    return (n + " " + (m.notes || "") + " " + (m.tags || []).join(" ")).toLowerCase().includes(q);
+  };
+  function render() {
+    const box = $("libList");
+    box.textContent = "";
+    for (const n of names.filter(matches)) {
+      const m2 = index.files[n] || {}, row = document.createElement("div");
+      row.className = "libRow" + (n === sel2 ? " on" : "");
+      row.dataset.name = n;
+      const a = document.createElement("span");
+      a.className = "ln";
+      a.textContent = stem(n);
+      const b = document.createElement("span");
+      b.className = "lt";
+      b.textContent = (m2.tags || []).join(", ");
+      row.append(a, b);
+      row.onclick = () => select(n);
+      row.ondblclick = () => open(n);
+      box.append(row);
+    }
+    if (!box.childElementCount) {
+      const e = document.createElement("div");
+      e.className = "libEmpty";
+      e.textContent = dir ? names.length ? "No sound matches the filter" : "The folder holds no .QD files yet" : "Add a folder to start a library";
+      box.append(e);
+    }
+    const all = [...new Set(Object.values(index.files).flatMap((f) => f.tags || []))].sort((a, b) => a.localeCompare(b)), tl = $("libTagList"), q = $("libFilter").value.trim().toLowerCase();
+    tl.textContent = "";
+    for (const t of all) {
+      const e = document.createElement("span");
+      e.textContent = t;
+      e.className = q === t.toLowerCase() ? "on" : "";
+      e.onclick = () => {
+        $("libFilter").value = q === t.toLowerCase() ? "" : t;
+        render();
+      };
+      tl.append(e);
+    }
+    const m = sel2 ? meta(sel2) : null;
+    $("libEdit").hidden = !sel2;
+    if (sel2) {
+      $("libTitle").textContent = stem(sel2);
+      if (document.activeElement !== $("libNotes")) $("libNotes").value = m.notes || "";
+      if (document.activeElement !== $("libTags")) $("libTags").value = (m.tags || []).join(", ");
+    }
+    enable();
+  }
+  function select(n) {
+    sel2 = n;
+    render();
+  }
+  function enable() {
+    const has = !!dir, one = has && !!sel2;
+    for (const id of ["libRescan", "libSave", "libImport", "libExport"]) $(id).disabled = !has;
+    $("libFetch").disabled = !has || !hooks.canFetch();
+    for (const id of ["libOpen", "libListen", "libDelete"]) $(id).disabled = !one;
+    $("libSend").disabled = !one || !hooks.canSend();
+  }
+  async function bytesOf(n) {
+    const [d, f] = await dirOf(n);
+    return new Uint8Array(await (await (await d.getFileHandle(f)).getFile()).arrayBuffer());
+  }
+  async function open(n = sel2) {
+    if (!n) return false;
+    sel2 = n;
+    render();
+    try {
+      hooks.open(await bytesOf(n), n, meta(n).key);
+      hooks.log("info", `Library: opened ${n}`);
+      return true;
+    } catch (e) {
+      hooks.log("bad", `Library: could not open ${n} (${e.message})`);
+      return false;
+    }
+  }
+  const unique = (base2) => {
+    let n = safe(base2) + ".QD", k = 2;
+    while (names.some((x) => x.toLowerCase() === n.toLowerCase())) n = `${safe(base2)}-${k++}.QD`;
+    return n;
+  };
+  async function saveCurrent(label) {
+    hooks.busy(true);
+    try {
+      const { img, key: key2, name } = await hooks.makeQd(), n = unique($("libNewName").value || label || name || "sound");
+      await writeFile(dir, n, img);
+      const m = meta(n);
+      m.key = key2;
+      m.added = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+      await saveIndexNow();
+      await scan();
+      select(n);
+      $("libNewName").value = "";
+      hooks.log("info", `Library: saved ${n}`);
+      note(`Saved ${n}`);
+      return n;
+    } catch (e) {
+      hooks.log("bad", `Library: could not save (${e.message})`);
+      note(`Could not save: ${e.message}`);
+      return null;
+    } finally {
+      hooks.busy(false);
+    }
+  }
+  async function importFiles(files) {
+    let ok = 0;
+    for (const f of files) {
+      if (!/\.qd$/i.test(f.name)) continue;
+      try {
+        const n = unique(f.name), data = new Uint8Array(await f.arrayBuffer());
+        await writeFile(dir, n, data);
+        meta(n).added = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+        ok++;
+      } catch (e) {
+        hooks.log("bad", `Library: ${f.name}: ${e.message}`);
+      }
+    }
+    await saveIndexNow();
+    await scan();
+    note(`Imported ${ok} file${ok === 1 ? "" : "s"}`);
+    hooks.log("info", `Library: imported ${ok} of ${files.length}`);
+  }
+  async function exportAll(target) {
+    let ok = 0;
+    hooks.busy(true);
+    try {
+      for (const n of names.filter(matches)) {
+        const parts = n.split("/"), f = parts.pop();
+        let d = target;
+        for (const q of parts) d = await d.getDirectoryHandle(q, { create: true });
+        await writeFile(d, f, await bytesOf(n));
+        ok++;
+      }
+      await writeFile(target, INDEX, JSON.stringify(index, null, 1));
+      note(`Exported ${ok} file${ok === 1 ? "" : "s"}`);
+      hooks.log("info", `Library: exported ${ok} files to ${target.name || "the folder"}`);
+    } catch (e) {
+      hooks.log("bad", `Library: export stopped (${e.message})`);
+    } finally {
+      hooks.busy(false);
+    }
+  }
+  const pick = async (mode) => {
+    try {
+      return await window.showDirectoryPicker({ mode, id: "s612lib" });
+    } catch (e) {
+      if (e.name !== "AbortError") hooks.log("bad", `Library: ${e.message}`);
+      return null;
+    }
+  };
+  $("libChoose").onclick = async () => {
+    if (!supported) return;
+    const h = await pick("readwrite");
+    if (h) await useFolder(h);
+  };
+  $("libFolder").onclick = () => {
+    if (cur >= 0 && !folders[cur].ok) showFolder(cur);
+  };
+  $("libFolder").onchange = () => showFolder(+$("libFolder").value);
+  $("libForget").onclick = async () => {
+    if (cur < 0) return;
+    folders.splice(cur, 1);
+    cur = folders.length ? Math.min(cur, folders.length - 1) : -1;
+    dir = null;
+    names = [];
+    sel2 = null;
+    drawFolders();
+    saveFolders();
+    if (cur >= 0) await showFolder(cur);
+    else {
+      render();
+      note("No library folder. Add one to start");
+    }
+  };
+  $("libRescan").onclick = async () => {
+    await readIndex();
+    if (await scan() === false) return;
+    note(`${names.length} sounds in the library folder`);
+  };
+  $("libFilter").oninput = render;
+  $("libOpen").onclick = () => open();
+  let held = 0;
+  const stopHeld = () => {
+    held++;
+    hooks.audition(null, null, false);
+  };
+  $("libListen").onpointerdown = async (e) => {
+    if (!sel2 || e.button) return;
+    e.preventDefault();
+    $("libListen").setPointerCapture?.(e.pointerId);
+    const my = ++held;
+    try {
+      const b = await bytesOf(sel2);
+      if (my === held) hooks.audition(b, meta(sel2).key, true);
+    } catch (er) {
+      hooks.log("bad", `Library: could not play ${sel2} (${er.message})`);
+    }
+  };
+  for (const ev of ["pointerup", "pointercancel", "lostpointercapture"]) $("libListen").addEventListener(ev, stopHeld);
+  $("libListen").onkeydown = (e) => {
+    if ((e.key === " " || e.key === "Enter") && !e.repeat) $("libListen").onpointerdown({ button: 0, preventDefault() {
+    } });
+  };
+  $("libListen").onkeyup = stopHeld;
+  $("libSend").onclick = async () => {
+    if (await open()) hooks.send();
+  };
+  $("libSave").onclick = () => saveCurrent();
+  $("libFetch").onclick = async () => {
+    hooks.busy(true);
+    let ok = false;
+    try {
+      ok = await hooks.fetchFromSampler();
+    } finally {
+      hooks.busy(false);
+    }
+    if (ok) await saveCurrent("sampler-" + (/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+  };
+  $("libImport").onclick = () => $("libImportFile").click();
+  $("libImportFile").onchange = (e) => {
+    importFiles([...e.target.files]);
+    e.target.value = "";
+  };
+  $("libExport").onclick = async () => {
+    if (!supported) return;
+    const t = await pick("readwrite");
+    if (t) exportAll(t);
+  };
+  $("libNotes").oninput = () => {
+    if (sel2) {
+      meta(sel2).notes = $("libNotes").value;
+      saveIndex();
+    }
+  };
+  $("libTags").oninput = () => {
+    if (sel2) {
+      meta(sel2).tags = $("libTags").value.split(",").map((t) => t.trim()).filter(Boolean);
+      saveIndex();
+      const row = $("libList").querySelector(".libRow.on .lt");
+      if (row) row.textContent = meta(sel2).tags.join(", ");
+    }
+  };
+  $("libTags").onchange = () => render();
+  $("libDelete").onclick = async () => {
+    if (!sel2 || !confirm(`Delete ${sel2} from the library folder? This cannot be undone.`)) return;
+    const n = sel2;
+    try {
+      {
+        const [d, f] = await dirOf(n);
+        await d.removeEntry(f);
+      }
+      delete index.files[n];
+      sel2 = null;
+      await saveIndexNow();
+      await scan();
+      note(`Deleted ${n}`);
+      hooks.log("info", `Library: deleted ${n}`);
+    } catch (e) {
+      hooks.log("bad", `Library: could not delete ${n} (${e.message})`);
+    }
+  };
+  if (!supported) {
+    note("This browser cannot open a folder. Use Chrome or Edge to keep a library.");
+    $("libChoose").disabled = true;
+  } else (async () => {
+    const hs = await getKey("dirs");
+    if (!hs || !hs.length) return;
+    for (const h of hs) {
+      let ok = false;
+      try {
+        ok = await h.queryPermission({ mode: "readwrite" }) === "granted";
+      } catch {
+      }
+      folders.push({ handle: h, ok });
+    }
+    const c = await getKey("cur");
+    cur = Math.min(Math.max(0, c ?? 0), folders.length - 1);
+    drawFolders();
+    if (folders[cur].ok) await showFolder(cur);
+    else note(`Press the folder list to allow access to ${folders[cur].handle.name} again`);
+  })();
+  render();
+  return { useFolder, refresh: enable, names: () => names, select, open, saveCurrent };
+}
+
+// src/transfer.js
+var $2 = (id) => document.getElementById(id);
+var midi = null;
+var outPort = null;
+var inPort = null;
+var demo = null;
+try {
+  const s = localStorage.getItem("s612trim");
+  if (s !== null && s !== "") document.getElementById("trim").value = s;
+} catch {
+}
+var saved = (() => {
+  try {
+    return JSON.parse(localStorage.getItem("s612midi") || "{}");
+  } catch {
+    return {};
+  }
+})();
+var saveMidi = () => {
+  try {
+    localStorage.setItem("s612midi", JSON.stringify({ out: $2("out").selectedOptions[0]?.text ?? saved.out, inp: $2("inp").selectedOptions[0]?.text ?? saved.inp, ch: $2("ch").value }));
+  } catch {
+  }
+};
+if (saved.ch !== void 0) $2("ch").value = saved.ch;
+$2("ch").addEventListener("change", saveMidi);
+var library = null;
+var waiters = [];
+var rx = new Uint8Array(0);
+var src = null;
+var prepared = null;
+var readWords = null;
+var readSnap = null;
+function log(kind, text) {
+  const d = document.createElement("div");
+  d.className = kind;
+  d.textContent = text;
+  const box = $2("log");
+  box.append(d);
+  box.scrollTop = box.scrollHeight;
+  while (box.childElementCount > 300) box.firstChild.remove();
+}
+$2("logDetails").onchange = () => $2("log").classList.toggle("showDetail", $2("logDetails").checked);
+var status = (t) => {
+  $2("status").textContent = t;
+};
+var linked = () => !!(demo || outPort && inPort);
+var ch = () => Math.max(0, Math.min(8, +$2("ch").value || 0));
+var key = () => Math.max(36, Math.min(72, Math.round(+$2("key").value || 72)));
+function refresh() {
+  const busy2 = refresh.busy, ok = linked() && !busy2;
+  $2("best").disabled = !src || busy2;
+  $2("send").disabled = !(ok && prepared && $2("allowWrite").checked);
+  $2("read").disabled = !ok;
+  $2("saveWav").disabled = !readWords || busy2;
+  $2("saveQd").disabled = !(prepared || readWords) || busy2;
+  library?.refresh();
+  $2("open").disabled = busy2;
+  $2("calibrate").disabled = !(ok && $2("allowWrite").checked);
+  for (const id of ["mode1", "mode2", "mode3", "mono", "precise"]) $2(id).disabled = !!busy2;
+  $2("reverse").disabled = busy2 || !prepared;
+  $2("bestMatch").disabled = busy2 || !precise || !prepared;
+  $2("knobs").classList.toggle("off", !!busy2);
+  $2("slotStart").classList.toggle("off", !!busy2);
+  $2("slotEnd").classList.toggle("off", !!busy2);
+  $2("thru").disabled = !(ok && src && $2("allowWrite").checked);
+  const has = !!src, sel2 = selection();
+  for (const id of ["editTrim", "editCut"]) $2(id).disabled = !(has && sel2.partial);
+  $2("edPlay").disabled = !(prepared || view === "mem" && readWords);
+  $2("edStop").disabled = $2("edPlay").disabled;
+  for (const id of ["editCrop", "editSilence", "editGainUp", "editGainDown", "editNorm"]) $2(id).disabled = !has;
+  $2("editUndo").disabled = !history.length;
+  $2("readKnobs").disabled = !ok;
+  $2("knobs").classList.toggle("off", !!busy2);
+  $2("lampLink").classList.toggle("on", linked());
+  $2("lampBusy").classList.toggle("on", !!busy2);
+}
+var busy = (b) => {
+  refresh.busy = b;
+  refresh();
+};
+function onBytes(bytes) {
+  rx = Uint8Array.from([...rx, ...bytes]);
+  const { messages, rest } = splitSysex(rx);
+  rx = rest;
+  for (const m of messages) {
+    const w = waiters.shift();
+    if (w) w(m);
+  }
+}
+var out = (b) => {
+  (window.__midiOut ??= []).push(Array.from(b));
+  if (b[0] < 240) log("detail", `tx ${toHex(b)}  (${["note off", "note on", "", "CC"][(b[0] >> 4) - 8] ?? "midi"}, channel ${(b[0] & 15) + 1})`);
+  if (!demo) outPort.send(b);
+};
+var midiChan = () => Math.max(1, ch());
+function send(msg) {
+  if (demo) {
+    for (const r of demo.receive(msg)) setTimeout(() => onBytes(r), 2);
+    return;
+  }
+  outPort.send(msg);
+}
+function ask(msg, ms = 2500) {
+  return new Promise((res) => {
+    const w = (m) => {
+      clearTimeout(timer);
+      res(m);
+    };
+    const timer = setTimeout(() => {
+      waiters = waiters.filter((x) => x !== w);
+      res(null);
+    }, ms);
+    waiters.push(w);
+    send(msg);
+  });
+}
+var lastWords = null;
+var view = "mem";
+var sel = null;
+var history = [];
+var unitSound = null;
+var unitMarks = null;
+var fades = { i: 0, o: 0 };
+var fadeGain = (dir, t, curve) => {
+  const o = curve === "fast" ? (1 - t) ** 3 : curve === "slow" ? 1 - t ** 3 : 1 - t;
+  return dir === "in" ? 1 - o : o;
+};
+var fadeAt = "";
+var clamp01 = (x) => Math.min(1, Math.max(0, x));
+var visN = () => src ? prepared && prepared.full > prepared.used ? Math.round(src.mono.length * prepared.used / prepared.full) : src.mono.length : 0;
+var perWord = () => src.mono.length / (prepared ? prepared.full : 1);
+var fadeA = () => prepared ? clamp01(startIdx() / prepared.used) : 0;
+var fadeB = () => prepared ? clamp01((endIdx() + 1) / prepared.used) : 1;
+var fadeDir = () => isRev() ? -1 : 1;
+var fadeKey = () => fadeA().toFixed(5) + "/" + fadeB().toFixed(5);
+var fadeHandleAt = (dir) => dir === "in" ? fadeA() + fadeDir() * fades.i : fadeB() - fadeDir() * fades.o;
+var unitRelease = (seg, rate) => {
+  const n = Math.min(512, seg.length), t = 18e-4 * rate;
+  for (let j = 0; j < n; j++) seg[seg.length - n + j] *= Math.exp(-j / t);
+};
+function fadedSource() {
+  const nm = src.mono.length, n = visN(), li = Math.round(fades.i * n), lo = Math.round(fades.o * n);
+  if (!li && !lo) return src.mono;
+  const m = Float32Array.from(src.mono), ci = $2("fadeCurveIn").value, co = $2("fadeCurveOut").value, d = fadeDir(), ia = Math.round(fadeA() * n), ib = Math.round(fadeB() * n);
+  for (let k = 0; k < li; k++) {
+    const j = d > 0 ? ia + k : ia - 1 - k;
+    if (j >= 0 && j < nm) m[j] *= fadeGain("in", k / Math.max(1, li - 1), ci);
+  }
+  for (let k = 0; k < lo; k++) {
+    const j = d > 0 ? ib - lo + k : ib + lo - 1 - k;
+    if (j >= 0 && j < nm) m[j] *= fadeGain("out", k / Math.max(1, lo - 1), co);
+  }
+  return m;
+}
+function applyFades(pr) {
+  fadeAt = fadeKey();
+  const n = pr.used, li = Math.round(fades.i * n), lo = Math.round(fades.o * n);
+  if (!li && !lo) return;
+  const w = pr.words, ci = $2("fadeCurveIn").value, co = $2("fadeCurveOut").value, d = fadeDir(), ia = Math.round(fadeA() * n), ib = Math.round(fadeB() * n);
+  const at = (j, g) => {
+    if (j >= 0 && j < n) w[j] = Math.round(REST + (w[j] - REST) * g);
+  };
+  for (let k = 0; k < li; k++) at(d > 0 ? ia + k : ia - 1 - k, fadeGain("in", k / Math.max(1, li - 1), ci));
+  for (let k = 0; k < lo; k++) at(d > 0 ? ib - lo + k : ib + lo - 1 - k, fadeGain("out", k / Math.max(1, lo - 1), co));
+}
+var PAGE = 256;
+var LOOP_OFFSET = 126;
+var MIN_LOOP = 8;
+var mono = false;
+var touched = /* @__PURE__ */ new Set();
+function setInUnit(b) {
+  inUnit = b;
+  showWhere();
+}
+function showWhere() {
+  const w = $2("where"), on = !!src || view === "mem" && readWords;
+  w.textContent = !on ? "" : inUnit ? "On sampler" : "On computer";
+  w.className = "where " + (inUnit ? "unit" : "comp");
+  w.title = inUnit ? "The sound in the editor is what the sampler holds. The mode, knobs, Start, End and loop are sent as you change them" : "The sound in the editor is on this computer only. The mode, knobs, Start, End and loop change this page until you press Send, which writes the sound and all of them to the sampler";
+}
+var newSound = false;
+var pts = { s: 130, e: 255 };
+var loopIdx = null;
+var precise = false;
+var loopAuto = true;
+var sW = 0;
+var inUnit = false;
+precise = true;
+var rev = false;
+var sOff = () => precise && !rev ? sW : 0;
+var clampE = (e) => Math.max(130, Math.min(255, e));
+var isRev = () => precise ? rev : pts.s > pts.e;
+var endHi = () => prepared ? maxEnd() : 255;
+var endPos = (e) => Math.min(1, (e - 130) / Math.max(1, endHi() - 130));
+var maxSW = (r, u = prepared.used) => Math.max(0, u - (r ? 0 : 256));
+var startPos = () => !prepared ? 0 : precise ? Math.min(1, sW / Math.max(1, prepared.used)) : Math.min(1, (pts.s - 130) / Math.max(1, endHi() - 130));
+var absPage = (x) => clampE(130 + Math.round((x + 1) / PAGE));
+var relPage = (x, s) => Math.max(131, clampE(130 + Math.round((x - s + 1) / PAGE)));
+var wStart = () => precise ? rev ? Math.max(130, Math.min(255, 130 + Math.floor(sW / PAGE))) : 130 : pts.s;
+var startIdx = () => precise && !rev ? sW : (wStart() - 130) * PAGE;
+var endIdx = () => sOff() + (pts.e - 130) * PAGE + (isRev() ? 1 : -1);
+var endAddr = () => pts.e - 1 << 8 | 255;
+var snapLoop = (i) => (Math.max(130, Math.min(255, 130 + Math.round((i - LOOP_OFFSET) / PAGE))) - 130) * PAGE + LOOP_OFFSET;
+function loopChanges() {
+  if (loopIdx === null) return {};
+  const start = isRev() ? 33280 + loopIdx - sOff() : Math.min(33280 + loopIdx - sOff(), endAddr() - MIN_LOOP), len = Math.max(1, isRev() ? start - ((pts.e << 8) + 1) : endAddr() - start);
+  return { 0: start & 255, 1: start >> 8, 2: len & 255, 3: len >> 8, 26: len & 255, 27: len >> 8 };
+}
+var maxEnd = (u = prepared.used) => Math.max(131, Math.min(255, 130 + Math.floor((u - sOff()) / PAGE)));
+var lastRev = false;
+var loopFree = false;
+function fixLoop() {
+  if (!prepared || loopIdx === null) return;
+  const r = isRev(), s = startIdx(), e = endIdx();
+  if (r !== lastRev) {
+    lastRev = r;
+    loopAuto = true;
+    loopFree = false;
+    loopIdx = defaultLoop();
+    return;
+  }
+  if (loopFree) return;
+  const lo = r ? e + MIN_LOOP : precise ? s : s + LOOP_OFFSET, hi = r ? precise ? s : s - (PAGE - LOOP_OFFSET) : e - MIN_LOOP;
+  if (lo <= hi) loopIdx = Math.max(lo, Math.min(hi, loopIdx));
+}
+var defaultLoop = () => {
+  if (isRev()) return Math.max(endIdx() + MIN_LOOP, Math.min(startIdx(), endIdx() + 1e3));
+  const e = endIdx(), d = Math.max(0, Math.min(prepared.used - 1, e) - 1e3);
+  return Math.max(0, Math.min(snapLoop(d), e - MIN_LOOP));
+};
+function cropHint() {
+  $2("lampReverse").classList.toggle("on", !!prepared && isRev());
+  const el2 = $2("cropHint");
+  if (!el2) return;
+  let t = "";
+  if (src && prepared && !inUnit) {
+    const part = Math.abs(endIdx() + 1 - startIdx()) / prepared.used, k = bestKey(visN() / src.rate * part);
+    if (k !== key() && part > 0 && part < 0.995) t = `Best key if cropped to Start-End: ${k} (${(keyRate(k) / 1e3).toFixed(2)} kHz)`;
+  }
+  if (el2.textContent !== t) el2.textContent = t;
+}
+function drawMarkers(g, c) {
+  cropHint();
+  if (view !== "src" || !prepared) return;
+  const u = prepared.used;
+  const mark = (idx, col, label, top) => {
+    let x = zx(idx / u, c.width);
+    if (idx < 0 || x > c.width + 2 || x < -2) return;
+    const edge = x > c.width - 40;
+    x = Math.min(x, c.width - 1);
+    g.save();
+    g.strokeStyle = g.fillStyle = col;
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(x, 0);
+    g.lineTo(x, c.height);
+    g.stroke();
+    g.lineWidth = 1;
+    g.font = "bold 12px sans-serif";
+    if (edge) g.textAlign = "right";
+    g.fillText(label, edge ? x - 4 : x + 4, top);
+    g.restore();
+  };
+  mark(startIdx(), "#6cc070", "start", 12);
+  mark(endIdx(), "#ef6a5e", "end", c.height - 6);
+  if (loopIdx !== null) mark(loopIdx, "#8fb4d6", "splice", 26);
+}
+var KNOB_FROM_BOTTOM = 22;
+var KNOB_R = 4.5;
+var ghost = null;
+var playPos = null;
+var zoom = { a: 0, b: 1 };
+var zx = (f, w) => (f - zoom.a) / (zoom.b - zoom.a) * w;
+function setZoom(a, b) {
+  const minW = Math.min(1, 64 / Math.max(64, prepared ? prepared.used : 64));
+  let w = Math.max(minW, Math.min(1, b - a));
+  a = Math.max(0, Math.min(1 - w, a));
+  zoom.a = a;
+  zoom.b = a + w;
+  if (lastWords) draw(lastWords);
+}
+var resetZoom = () => {
+  zoom.a = 0;
+  zoom.b = 1;
+};
+function drawFades(g, c) {
+  if (view !== "src" || !src) return;
+  const kx = c.width / (c.getBoundingClientRect().width || c.width), ky = c.height / (c.getBoundingClientRect().height || c.height), mid = c.height / 2, amp = mid - 6 * ky;
+  for (const dir of ["in", "out"]) {
+    const f = dir === "in" ? fades.i : fades.o, curve = $2(dir === "in" ? "fadeCurveIn" : "fadeCurveOut").value, w = f / (zoom.b - zoom.a) * c.width, d = fadeDir(), xa = dir === "in" ? zx(fadeA(), c.width) : zx(fadeB(), c.width) - d * w, active = f > 0;
+    g.save();
+    g.strokeStyle = g.fillStyle = active ? "#f2a23a" : "#8a8f98";
+    g.lineWidth = 1.5 * kx;
+    if (active && w > 2) for (const sgn of [-1, 1]) {
+      g.beginPath();
+      for (let px = 0; px <= 40; px++) {
+        const t = px / 40, y = mid + sgn * fadeGain(dir, t, curve) * amp;
+        px ? g.lineTo(xa + d * t * w, y) : g.moveTo(xa, y);
+      }
+      g.stroke();
+    }
+    g.beginPath();
+    g.ellipse(zx(fadeHandleAt(dir), c.width), c.height - KNOB_FROM_BOTTOM * ky, KNOB_R * kx, KNOB_R * ky, 0, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+  }
+}
+function wave(g, c, all, colour) {
+  const len = all.length, lo0 = Math.max(0, Math.floor(zoom.a * len) - 1), hi0 = Math.min(len, Math.ceil(zoom.b * len) + 2), W = c.width, y = (v) => c.height - v / 4095 * c.height;
+  g.strokeStyle = colour;
+  g.beginPath();
+  if (hi0 - lo0 <= W * 2) {
+    for (let i = lo0; i < hi0; i++) {
+      const x = zx(i / len, W);
+      i === lo0 ? g.moveTo(x, y(all[i])) : g.lineTo(x, y(all[i]));
+    }
+  } else {
+    const per = (hi0 - lo0) / W;
+    let prev = null;
+    for (let x = 0; x < W; x++) {
+      const i0 = lo0 + Math.floor(x * per), i1 = Math.max(i0 + 1, lo0 + Math.floor((x + 1) * per));
+      let lo = 4095, hi = 0;
+      for (let i = i0; i < Math.min(len, i1); i++) {
+        lo = Math.min(lo, all[i]);
+        hi = Math.max(hi, all[i]);
+      }
+      if (lo > hi) break;
+      if (prev !== null) {
+        lo = Math.min(lo, prev);
+        hi = Math.max(hi, prev);
+      }
+      g.moveTo(x, y(hi));
+      g.lineTo(x, y(lo));
+      prev = all[Math.min(len, i1) - 1];
+    }
+  }
+  g.stroke();
+}
+function draw(words, v = view) {
+  lastWords = words;
+  view = v;
+  showWhere();
+  if (v === "src" && (fades.i > 0 || fades.o > 0) && prepared && fadeKey() !== fadeAt && !draw.pending) {
+    draw.pending = true;
+    queueMicrotask(() => {
+      draw.pending = false;
+      if (src) {
+        setInUnit(false);
+        prepare2();
+      }
+    });
+  }
+  if (view !== "src") resetZoom();
+  const c = $2("wave");
+  if (c.clientWidth && c.width !== c.clientWidth) c.width = c.clientWidth;
+  c.height = 160;
+  const g = c.getContext("2d");
+  g.clearRect(0, 0, c.width, c.height);
+  if (view === "src") {
+    g.strokeStyle = "#3a3c42";
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(0, Math.round(c.height / 2) + 0.5);
+    g.lineTo(c.width, Math.round(c.height / 2) + 0.5);
+    g.stroke();
+  }
+  if (view === "src" && ghost) wave(g, c, ghost, "#4a4e57");
+  wave(g, c, words, "#d8cca6");
+  drawFades(g, c);
+  drawMarkers(g, c);
+  if (view === "src" && sel && sel.b !== sel.a) {
+    g.fillStyle = "rgba(201,164,92,.3)";
+    const x0 = zx(Math.min(sel.a, sel.b), c.width), x1 = zx(Math.max(sel.a, sel.b), c.width);
+    g.fillRect(x0, 0, x1 - x0, c.height);
+  }
+  if (playPos !== null) {
+    g.strokeStyle = "#fff";
+    g.beginPath();
+    g.moveTo(zx(playPos, c.width), 0);
+    g.lineTo(zx(playPos, c.width), c.height);
+    g.stroke();
+  }
+  showZoomBar();
+}
+function prepare2() {
+  if (!src) return;
+  const k = key(), rate = keyRate(k);
+  lastKey = k;
+  prepared = prepare(src.mono, src.rate, k, { normalise: false, trimPct: +$2("trim").value || 0 });
+  applyFades(prepared);
+  const secs = MEMORY_WORDS / rate;
+  const rootInfo = src.root === null ? "" : `, file root note ${src.root} (plays at its own pitch on key ${k}${k === src.root ? "" : `, ${Math.abs(src.root - k)} semitones ${src.root > k ? "below" : "above"} that note`})`;
+  $2("rateInfo").textContent = `${(rate / 1e3).toFixed(2)} kHz, memory holds ${secs.toFixed(2)} s${rootInfo}`;
+  ghost = null;
+  if (newSound) {
+    newSound = false;
+    resetZoom();
+    rev = false;
+    sW = 0;
+    const u = prepared.used;
+    pts = { s: 130, e: 131 };
+    pts.e = maxEnd(u);
+    loopAuto = true;
+    loopFree = false;
+    loopIdx = defaultLoop();
+    if (src.unit) {
+      const s = src.unit, st = Math.max(130, s[11]), eu = Math.max(130, s[25]), absEnd = (eu - 130) * PAGE - 1;
+      let ls = (s[1] << 8 | s[0]) - 33280;
+      if (ls < 0 && ls > -PAGE) ls = 0;
+      if (precise) {
+        rev = s[11] > s[25];
+        sW = Math.min((st - 130) * PAGE, maxSW(rev, u));
+        pts = { s: 130, e: rev ? eu : relPage(absEnd, sW) };
+      } else pts = { s: Math.min(st, 255), e: eu };
+      loopFree = false;
+      if (ls >= 0 && ls < u - 1 && (rev || ls < endIdx() - MIN_LOOP)) {
+        loopIdx = ls;
+        loopAuto = false;
+        loopFree = precise && (rev ? ls > startIdx() : ls < startIdx());
+      } else loopIdx = defaultLoop();
+      if (s[4] >= 1 && s[4] <= 3) showMode(s[4]);
+      if (loopIdx !== null && !rev && loopIdx < sW) loopIdx = sW;
+    }
+    slots.start.put(startPos());
+    slots.end.put(endPos(pts.e));
+  }
+  if (fades.i || fades.o) {
+    const base2 = prepare(src.mono, src.rate, k, { normalise: false, trimPct: +$2("trim").value || 0 });
+    ghost = base2.words.subarray(0, base2.used);
+  }
+  draw(prepared.words.subarray(0, prepared.used), "src");
+  retarget();
+  $2("stats").textContent = `${src.name}: ${(src.mono.length / src.rate).toFixed(2)} s at ${src.rate} Hz` + (prepared.truncated ? ` (too long for this key: the last ${(prepared.seconds - secs).toFixed(2)} s will be cut off)` : `, uses ${prepared.used} of ${MEMORY_WORDS} words`);
+  refresh();
+  selText();
+}
+function loadQD(bytes, name) {
+  const img = importQD(bytes);
+  readWords = img.words;
+  readSnap = img.settings;
+  const s = img.settings;
+  KNOBS.forEach((k, i) => knobs[i].set(k.from(s)));
+  touched.clear();
+  KNOBS.forEach((k) => touched.add(k.name));
+  showMode(s[4]);
+  showMono(s[14] !== 0);
+  keyAuto = false;
+  keyHold = true;
+  loadReadSound(name, false);
+  $2("name").textContent = name;
+  $2("stats").textContent = `Opened ${name}: ${img.words.length} words and the settings`;
+  log("info", `opened ${name}: ${img.words.length} words, mode ${{ 1: "alternating", 2: "one shot", 3: "looping" }[s[4]] ?? s[4]}, ${s[14] ? "mono" : "poly"}; nothing is sent until you press Send`);
+}
+async function load(file) {
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (/\.qd$/i.test(file.name)) {
+      loadQD(bytes, file.name);
+      return;
+    }
+    const w = parseWav(bytes);
+    setInUnit(false);
+    src = { name: file.name, rate: w.rate, mono: toMono(w.channels), root: w.root };
+    sel = null;
+    fades.i = fades.o = 0;
+    newSound = true;
+    $2("name").textContent = file.name;
+    showMode(2);
+    showMono(false);
+    keyHold = false;
+    if (keyLocked) keyAuto = false;
+    else {
+      keyAuto = true;
+      $2("key").value = bestKey(src.mono.length / src.rate);
+    }
+    log("info", `loaded ${file.name}: ${w.channels.length} channel(s), ${w.rate} Hz, ${(src.mono.length / w.rate).toFixed(2)} s`);
+    prepare2();
+  } catch (e) {
+    status(`Could not open that file: ${e.message}`);
+    log("bad", e.message);
+  }
+}
+$2("open").onclick = () => {
+  $2("file").accept = ".wav,.aif,.aiff,.aifc,audio/*";
+  $2("file").click();
+};
+$2("file").onchange = (e) => {
+  if (e.target.files[0]) load(e.target.files[0]);
+  e.target.value = "";
+};
+addEventListener("dragover", (e) => e.preventDefault());
+addEventListener("drop", (e) => {
+  e.preventDefault();
+  if (e.dataTransfer.files[0]) load(e.dataTransfer.files[0]);
+});
+var saveTrim = () => {
+  try {
+    localStorage.setItem("s612trim", $2("trim").value);
+  } catch {
+  }
+};
+var lastKey = 72;
+var keyHold = false;
+var keyAuto = true;
+var snapMarkers = () => ({ s: startIdx(), e: endIdx(), l: loopIdx });
+function rescaleMarkers(m, r) {
+  if (!prepared || !m) return;
+  if (m.l !== null) loopIdx = Math.round(m.l * r);
+  if (precise) sW = Math.min(Math.round(m.s * r), maxSW(rev));
+  else pts.s = Math.max(130, Math.min(maxEnd(), 130 + Math.round(m.s * r / PAGE)));
+  pts.e = isRev() ? absPage(m.e * r) : Math.min(maxEnd(), relPage(m.e * r, sOff()));
+  if (!precise && loopIdx !== null) loopIdx = snapLoop(loopIdx);
+  slots.end.put(endPos(pts.e));
+  slots.start.put(startPos());
+  redraw();
+}
+function changeKey(nk) {
+  setInUnit(false);
+  const m = snapMarkers(), r0 = keyRate(lastKey);
+  $2("key").value = nk;
+  prepare2();
+  rescaleMarkers(m, keyRate(key()) / r0);
+}
+var keepKey = false;
+var keyLocked = false;
+$2("keyLock").onclick = () => {
+  keyLocked = !keyLocked;
+  $2("keyLock").setAttribute("aria-pressed", keyLocked);
+  if (keyLocked) {
+    keyAuto = false;
+    keyHold = false;
+  }
+};
+function reprepare(lengthChanged = true) {
+  if (keyLocked) {
+    prepare2();
+    return;
+  }
+  if (keepKey) {
+    const nk = bestKey(src.mono.length / src.rate);
+    if (nk !== key()) log("info", `Rate key kept at ${key()} so the loop stays exact (Best key would pick ${nk})`);
+    prepare2();
+    return;
+  }
+  if ((keyAuto || keyHold && lengthChanged) && src) {
+    const nk = bestKey(src.mono.length / src.rate);
+    if (nk !== key()) {
+      keyHold = false;
+      keyAuto = true;
+      changeKey(nk);
+      return;
+    }
+  }
+  prepare2();
+}
+for (const id of ["key", "trim"]) $2(id).onchange = () => {
+  if (id === "trim") saveTrim();
+  setInUnit(false);
+  if (id === "key") {
+    keyAuto = false;
+    keyHold = false;
+    changeKey(key());
+  } else prepare2();
+};
+$2("heard").onchange = () => {
+  const h = +$2("heard").value;
+  if (h > 0) {
+    $2("trim").value = trimFromHz(h).toFixed(2);
+    saveTrim();
+    status(`Clock trim set to ${$2("trim").value} % from ${h} Hz`);
+    prepare2();
+  }
+};
+$2("best").onclick = () => {
+  keyAuto = true;
+  changeKey(bestKey(src.mono.length / src.rate));
+};
+$2("allowWrite").onchange = refresh;
+var ctx = null;
+var listenNode = null;
+var curMode = 2;
+var listenPos = null;
+var rt = null;
+function flashStop() {
+  const b = $2("edStop");
+  b.classList.remove("stopflash");
+  void b.offsetWidth;
+  b.classList.add("stopflash");
+  b.addEventListener("animationend", () => b.classList.remove("stopflash"), { once: true });
+}
+function toggleListen() {
+  if (listenNode) {
+    stopListen();
+    flashStop();
+    return;
+  }
+  startListen();
+}
+setInterval(() => $2("edPlay").classList.toggle("playing", !!listenNode), 100);
+function stopListen() {
+  try {
+    listenNode?.stop();
+  } catch {
+  }
+  listenNode = null;
+  listenPos = null;
+}
+function retarget() {
+  if (!listenNode) return;
+  clearTimeout(rt);
+  rt = setTimeout(() => {
+    if (!listenNode) return;
+    const pos = listenPos?.();
+    const old = listenNode;
+    old.onended = null;
+    stopListen();
+    startListen(pos);
+  }, 40);
+}
+function startListen(fromWord = null) {
+  const mem = view === "mem" && readWords;
+  if (!prepared && !mem) return;
+  ctx ??= new AudioContext();
+  ctx.resume?.();
+  const words = mem ? readWords : prepared.words, rate = keyRate(key()) * (1 - (+$2("trim").value || 0) / 100), u = mem ? readWords.length : prepared.used;
+  let a = mem ? 0 : Math.max(0, Math.min(startIdx(), endIdx())), b = mem ? u : Math.min(u, Math.max(startIdx(), endIdx()) + 1);
+  const reversed = !mem && isRev();
+  if (a >= b) {
+    a = 0;
+    b = u;
+  }
+  let seg = new Float32Array(b - a);
+  for (let i = a; i < b; i++) seg[i - a] = (words[i] - REST) / 2040;
+  if (reversed) seg = seg.reverse();
+  const ls = Math.max(a, loopIdx ?? a), alt = curMode === 1;
+  let pre0 = reversed ? Math.max(0, Math.min(seg.length - 1, b - 1 - Math.max(a, Math.min(b - 1, loopIdx ?? a)))) : Math.max(0, ls - a);
+  let loop = !mem && curMode !== 2 && loopIdx !== null;
+  if (!loop) unitRelease(seg, rate);
+  let blk = null;
+  if (loop && !alt && loopFree && !mem) {
+    if (reversed ? loopIdx > b - 1 && loopIdx < u : loopIdx >= 0 && loopIdx < a) blk = reversed ? Float32Array.from({ length: loopIdx - a + 1 }, (_, i) => (words[loopIdx - i] - REST) / 2040) : Float32Array.from({ length: b - loopIdx }, (_, i) => (words[loopIdx + i] - REST) / 2040);
+    if (blk && blk.length >= 8) {
+      const s2 = new Float32Array(seg.length + blk.length);
+      s2.set(seg);
+      s2.set(blk, seg.length);
+      pre0 = seg.length;
+      seg = s2;
+    } else blk = null;
+  }
+  let x = seg;
+  if (loop && alt) {
+    const tail = seg.slice(pre0).reverse();
+    x = new Float32Array(seg.length + tail.length);
+    x.set(seg);
+    x.set(tail, seg.length);
+  }
+  const sr = ctx.sampleRate, ratio = sr / rate;
+  let y, loopFrom = 0;
+  if (loop) {
+    const pre = pre0, lp = x.subarray(pre), L2 = lp.length, N = Math.max(1, Math.round(L2 * ratio)), n1 = Math.round(pre * ratio);
+    const head = pre ? resample(Float32Array.from([...x.subarray(0, pre), ...lp, ...lp]), rate, sr).subarray(0, n1) : new Float32Array(0);
+    const trip = new Float32Array(3 * L2);
+    trip.set(lp, 0);
+    trip.set(lp, L2);
+    trip.set(lp, 2 * L2);
+    const mid = resample(trip, L2, N).subarray(N, 2 * N);
+    y = new Float32Array(head.length + mid.length);
+    y.set(head);
+    y.set(mid, head.length);
+    loopFrom = head.length;
+  } else {
+    y = resample(x, rate, sr);
+  }
+  const buf = ctx.createBuffer(1, y.length, ctx.sampleRate);
+  buf.getChannelData(0).set(y);
+  const s = ctx.createBufferSource();
+  s.buffer = buf;
+  s.connect(ctx.destination);
+  const L = seg.length - pre0;
+  const off = fromWord === null ? 0 : Math.max(0, Math.min(fromWord, b - 1) - a) / rate, t0 = ctx.currentTime - off;
+  if (loop) {
+    s.loop = true;
+    s.loopStart = loopFrom / sr;
+    s.loopEnd = y.length / sr;
+  }
+  window.__listenInfo = { loop, alt, mode: curMode, loopStart: s.loopStart, loopEnd: s.loopEnd, a, b };
+  const posAt = (t) => {
+    const w = t * rate, first = b - a;
+    if (blk && w >= first) {
+      const m2 = (w - first) % L;
+      return reversed ? loopIdx - m2 : loopIdx + m2;
+    }
+    if (!loop || w < first) return reversed ? b - Math.min(w, first) : a + Math.min(w, first);
+    const m = (w - first) % (alt ? 2 * L : L);
+    return reversed ? alt ? m < L ? a + m : b - pre0 - (m - L) : b - pre0 - m : alt ? m < L ? b - m : ls + (m - L) : ls + m;
+  };
+  listenPos = () => posAt(ctx.currentTime - t0);
+  Object.assign(window.__listenInfo, { posAt, rate, first: b - a, L, pre0 });
+  const tick = () => {
+    if (listenNode !== s) {
+      playPos = null;
+      if (lastWords) draw(lastWords);
+      return;
+    }
+    playPos = Math.min(1, posAt(ctx.currentTime - t0) / u);
+    draw(lastWords);
+    requestAnimationFrame(tick);
+  };
+  s.onended = () => {
+    if (listenNode === s) {
+      listenNode = null;
+      listenPos = null;
+    }
+  };
+  s.start(0, off);
+  listenNode = s;
+  requestAnimationFrame(tick);
+}
+$2("edPlay").onclick = () => {
+  stopListen();
+  startListen();
+  $2("edPlay").classList.toggle("playing", !!listenNode);
+  refresh();
+};
+$2("edStop").onclick = () => {
+  flashStop();
+  stopListen();
+  if (lastWords) draw(lastWords);
+  refresh();
+};
+addEventListener("keydown", (e) => {
+  if (e.code !== "Space" || e.repeat) return;
+  const tag = e.target?.tagName, type = e.target?.type;
+  if (tag === "SELECT" || tag === "TEXTAREA" || tag === "INPUT" && type !== "range") return;
+  e.preventDefault();
+  toggleListen();
+});
+document.addEventListener("click", (e) => e.target.closest?.("button")?.blur());
+async function readAll(label) {
+  const all = [];
+  let m = await ask(requestFirstBlock(ch()));
+  for (let n = 0; m && n < BLOCKS + 2; n++) {
+    const h = parseHeader(m);
+    if (!h || h.cmd !== CMD.DATA) break;
+    all.push(...decodeWords(h.payload));
+    status(`${label}... block ${all.length / BLOCK_WORDS} of ${BLOCKS}`);
+    m = await ask(requestNextBlock(ch()));
+  }
+  return Uint16Array.from(all);
+}
+function sentWords() {
+  if (!precise || rev || !sW) return prepared.words;
+  const w = prepared.words, o = new w.constructor(w.length);
+  o.fill(w[w.length - 1]);
+  o.set(w.subarray(sW, Math.min(w.length, sW + w.length)));
+  return o;
+}
+async function writeAll(words) {
+  for (let n = 0; n < BLOCKS; n++) {
+    const a = await ask(selectBlock(ch(), n));
+    if (!a || !isAck(a)) {
+      log("bad", `block ${n}: not accepted, stopped`);
+      return false;
+    }
+    const d = await ask(dataBlock(ch(), words.subarray(n * BLOCK_WORDS, (n + 1) * BLOCK_WORDS)));
+    if (!d || !isAck(d)) {
+      log("bad", `block ${n}: data not acknowledged, stopped`);
+      return false;
+    }
+    status(`Sending... block ${n + 1} of ${BLOCKS}`);
+  }
+  return true;
+}
+function sendKey() {
+  const n = key(), c = midiChan();
+  out(noteOn(c, n));
+  setTimeout(() => out(noteOff(c, n)), 150);
+  return new Promise((r) => setTimeout(r, 450));
+}
+$2("send").onclick = async () => {
+  busy(true);
+  try {
+    await sendKey();
+    const data = sentWords(), ok = await writeAll(data);
+    if (ok) {
+      setInUnit(true);
+      pendingWrite = { 4: curMode };
+      pendingWrite[14] = mono ? 255 : 0;
+      KNOBS.forEach((k, i) => {
+        if (touched.has(k.name)) Object.assign(pendingWrite, k.to(knobs[i].value));
+      });
+      touched.clear();
+      writeSettings();
+      while (writing) await wait(20);
+    }
+    let msg = ok ? `Sent all ${BLOCKS} blocks at key ${key()}` : "Sending stopped early, the sampler memory is partly changed";
+    if (ok && $2("verify").checked) {
+      const back = await readAll("Verifying");
+      let diff = 0;
+      for (let i = 0; i < data.length; i++) if (data[i] !== back[i]) diff++;
+      msg += `; read back ${back.length} words, ${diff} different`;
+      if (diff || back.length !== data.length) log("bad", msg);
+    }
+    status(msg);
+    log(ok ? "info" : "bad", msg);
+  } finally {
+    busy(false);
+  }
+};
+$2("calibrate").onclick = async () => {
+  busy(true);
+  try {
+    const words = Uint16Array.from({ length: BLOCKS * BLOCK_WORDS }, (_, i) => Math.round(2048 + 1800 * Math.sin(2 * Math.PI * i / 32)));
+    const n = 72, c = midiChan();
+    status("Sending the 1 kHz test tone...");
+    out(noteOn(c, n));
+    setTimeout(() => out(noteOff(c, n)), 150);
+    await new Promise((r) => setTimeout(r, 450));
+    if (!await writeAll(words)) {
+      status("Calibration stopped: the tone was not sent");
+      return;
+    }
+    let stream = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    } catch (e) {
+      status(`No audio input (${e.message}). Play key 72 and type the tuner's Hz into Heard Hz instead`);
+      return;
+    }
+    ctx ??= new AudioContext();
+    const an = ctx.createAnalyser();
+    an.fftSize = 8192;
+    const msrc = ctx.createMediaStreamSource(stream);
+    msrc.connect(an);
+    out(noteOn(c, n));
+    status("Listening to key 72...");
+    const hz = [], buf = new Float32Array(an.fftSize);
+    for (let i = 0; i < 12; i++) {
+      await new Promise((r) => setTimeout(r, 250));
+      an.getFloatTimeDomainData(buf);
+      const h = detectHz(buf, ctx.sampleRate, 600, 1400);
+      if (h) hz.push(h);
+    }
+    out(noteOff(c, n));
+    stream.getTracks().forEach((t) => t.stop());
+    const m = median(hz);
+    if (hz.length < 4 || m === null) {
+      status("Heard nothing usable. Raise the volume or move the microphone nearer, or type the tuner reading into Heard Hz");
+      return;
+    }
+    $2("heard").value = m.toFixed(1);
+    $2("heard").onchange();
+    log("info", `calibration: heard ${m.toFixed(1)} Hz for a 1000 Hz tone (${hz.length} readings)`);
+  } finally {
+    busy(false);
+  }
+};
+var wait = (ms) => new Promise((r) => setTimeout(r, ms));
+$2("thru").onclick = async () => {
+  busy(true);
+  try {
+    const k = key(), trim = +$2("trim").value || 0, rate = keyRate(k) * (1 - trim / 100), memSecs = MEMORY_WORDS / rate;
+    const marks = { pts: { ...pts }, sW, rev, loopIdx, loopAuto };
+    const panel = { mode: curMode, mono, knobs: KNOBS.map((kn, i) => touched.has(kn.name) ? kn.to(knobs[i].value) : null) };
+    status(`Sending rate key ${k}...`);
+    await sendKey();
+    for (let i = Math.max(0, Math.round(+$2("countIn").value || 0)); i > 0; i--) {
+      status(`Press NEW on the sampler now. Playing in ${i}...`);
+      await wait(1e3);
+    }
+    ctx ??= new AudioContext();
+    await ctx.resume?.();
+    const played = fadedSource(), buf = ctx.createBuffer(1, played.length, src.rate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = played[i];
+    const node = ctx.createBufferSource();
+    node.buffer = buf;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.8;
+    node.connect(gain);
+    gain.connect(ctx.destination);
+    node.start();
+    const secs = src.mono.length / src.rate;
+    status(`Playing (${secs.toFixed(1)} s)...`);
+    await wait((Math.max(secs, memSecs) + 0.7) * 1e3);
+    const w = await readAll("Reading");
+    if (w.length) {
+      readWords = w;
+      draw(w, "mem");
+      sel = null;
+      readSnap = await readSettings();
+    }
+    const ok2 = w.length === BLOCKS * BLOCK_WORDS;
+    const msg = ok2 ? `Recorded through the sampler at key ${k}: read back ${w.length} words` : "Read incomplete after recording";
+    if (ok2) {
+      loadReadSound("sampler memory", true, true);
+      rev = marks.rev;
+      sW = Math.min(marks.sW, maxSW(marks.rev));
+      pts = { ...marks.pts };
+      if (!rev) pts.e = Math.max(131, Math.min(pts.e, maxEnd()));
+      loopAuto = marks.loopAuto;
+      lastRev = rev;
+      loopIdx = marks.loopIdx !== null && marks.loopIdx < prepared.used - 1 ? marks.loopIdx : (loopAuto = true, defaultLoop());
+      slots.start.put(startPos());
+      slots.end.put(endPos(pts.e));
+      fixLoop();
+      showMode(panel.mode);
+      pendingWrite = { 4: panel.mode };
+      showMono(panel.mono);
+      pendingWrite[14] = panel.mono ? 255 : 0;
+      panel.knobs.forEach((o) => {
+        if (o) Object.assign(pendingWrite, o);
+      });
+      touched.clear();
+      writePts();
+      log("info", "Your mode and knob settings were put onto the recorded sound");
+    }
+    status(msg);
+    log(ok2 ? "info" : "bad", msg);
+  } catch (e) {
+    status(`Could not play: ${e.message}`);
+    log("bad", e.message);
+  } finally {
+    busy(false);
+  }
+};
+$2("read").onclick = async () => {
+  busy(true);
+  try {
+    const w = await readAll("Reading");
+    if (w.length) {
+      readWords = w;
+      draw(w, "mem");
+      sel = null;
+      readSnap = await readSettings();
+      $2("stats").textContent = `Read ${w.length} words from the sampler`;
+    }
+    const whole = w.length === BLOCKS * BLOCK_WORDS;
+    if (whole) loadReadSound();
+    status(whole ? "Read the whole sample memory" : "Read incomplete");
+  } finally {
+    busy(false);
+  }
+};
+$2("saveWav").onclick = () => {
+  const rate = Math.round(keyRate(key()) * (1 - (+$2("trim").value || 0) / 100));
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([wavFromWords(readWords, rate)], { type: "audio/wav" }));
+  a.download = `s612-sample-key${key()}.wav`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2e3);
+};
+async function makeQd() {
+  {
+    let words = prepared ? sentWords() : readWords;
+    if (words.length !== WORDS) {
+      const w = new Uint16Array(WORDS);
+      w.fill(words[words.length - 1] ?? REST);
+      w.set(words.subarray(0, WORDS));
+      words = w;
+    }
+    let vals = linked() && inUnit ? await readSettings() : null, from = "the sampler";
+    if (!vals) {
+      from = readSnap ? "the last read of the sampler and this page" : "default settings and this page";
+      vals = Uint8Array.from(readSnap ?? await templateSettings());
+      if (prepared) {
+        vals[4] = curMode;
+        vals[14] = mono ? 255 : 0;
+        KNOBS.forEach((k, i) => {
+          if (touched.has(k.name)) for (const [n, v] of Object.entries(k.to(knobs[i].value))) vals[+n] = v;
+        });
+        const s = wStart(), e = pts.e;
+        vals[11] = s;
+        vals[25] = e;
+        vals[13] = Math.max(0, Math.abs(e - s) - 1);
+        for (const i of [5, 6]) vals[i] = vals[i] & ~32 | (s > e ? 32 : 0);
+        for (const [n, v] of Object.entries(loopChanges())) vals[+n] = v;
+      }
+    }
+    const img = await exportQD(words, vals);
+    return { img, from, key: key(), name: (src?.name || $2("name").textContent || "").replace(/\.[A-Za-z0-9]+$/, "") };
+  }
+}
+$2("saveQd").onclick = async () => {
+  busy(true);
+  try {
+    const { img, from } = await makeQd();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([img], { type: "application/octet-stream" }));
+    a.download = `s612-key${key()}.QD`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2e3);
+    const msg = `Saved a disk image (${img.length} bytes); settings from ${from}`;
+    status(msg);
+    log("info", msg);
+  } catch (e) {
+    status(`Could not save the image: ${e.message}`);
+    log("bad", e.message);
+  } finally {
+    busy(false);
+  }
+};
+async function readSettings() {
+  const m = await ask(requestSettings(ch())), h = m && parseHeader(m);
+  return h && h.cmd === CMD.DATA && h.type === TYPE.SETTINGS ? decodeSettings(h.payload) : null;
+}
+async function applyMode(modeArg) {
+  busy(true);
+  try {
+    const before = await readSettings();
+    if (!before) {
+      status("Could not read the sampler settings, nothing changed");
+      return;
+    }
+    const mode = modeArg ?? before[4], s = wStart(), e = pts.e;
+    const vals = Uint8Array.from(before);
+    vals[4] = mode;
+    if (inUnit) {
+      vals[11] = s;
+      vals[25] = e;
+      vals[13] = Math.max(0, Math.abs(e - s) - 1);
+    }
+    send(settingsMessage(ch(), vals));
+    await new Promise((r) => setTimeout(r, 300));
+    const after = await readSettings();
+    let diff = 0;
+    if (after) {
+      for (let i = 0; i < 32; i++) if (after[i] !== vals[i]) diff++;
+    }
+    const name = { 1: "alternating", 2: "one shot", 3: "looping" }[mode];
+    const msg = after ? `Set ${name}${diff ? `; ${diff} value(s) differ from what was sent` : "; read back and matches"}` : "Settings sent but could not be read back";
+    status(msg);
+    log(diff || !after ? "bad" : "info", msg);
+    if (modeArg === void 0) showMode(mode);
+  } finally {
+    busy(false);
+  }
+}
+for (const m of [1, 2, 3]) $2("mode" + m).onclick = () => {
+  showMode(m);
+  if (linked() && inUnit) applyMode(m);
+};
+var showMono = (b) => {
+  mono = b;
+  $2("lampMono").classList.toggle("on", b);
+};
+$2("mono").onclick = () => {
+  showMono(!mono);
+  if (!linked() || !inUnit) return;
+  pendingWrite = { ...pendingWrite ?? {}, 14: mono ? 255 : 0 };
+  flushKnobs();
+};
+var showMode = (m) => {
+  curMode = m;
+  retarget();
+  for (const x of [1, 2, 3]) $2("lamp" + x).classList.toggle("on", x === m);
+};
+var KNOBS = [
+  { name: "LFO speed", lo: "Slow", hi: "Fast", cap: "#3fc7a8", hint: "LFO speed (setting 16, 4 to 19)", to: (v) => ({ 16: 4 + Math.round(v * 15) }), from: (s) => (s[16] - 4) / 15, fmt: (v) => 4 + Math.round(v * 15) },
+  { name: "LFO depth", lo: "Min", hi: "Max", cap: "#3fc7a8", hint: "LFO depth (setting 17, 0 to 254)", to: (v) => ({ 17: Math.round(v * 254) }), from: (s) => s[17] / 254, fmt: (v) => Math.round(v * 254) },
+  { name: "LFO delay", lo: "None", hi: "Long", cap: "#3fc7a8", hint: "LFO delay: how long after the note starts before the vibrato comes in (settings 18 and 19, a 16-bit value from 1020 for none down to 4 for the longest)", to: (v) => {
+    const y = 1020 - Math.round(v * 1016);
+    return { 18: y & 255, 19: y >> 8 };
+  }, from: (s) => (1020 - (s[18] | s[19] << 8)) / 1016, fmt: (v) => 1020 - Math.round(v * 1016) },
+  { name: "Filter", lo: "Closed", hi: "Open", cap: "#52bde6", hint: "Filter (setting 20, 63 closed to 0 open)", to: (v) => ({ 20: 63 - Math.round(v * 63) }), from: (s) => (63 - s[20]) / 63, fmt: (v) => 63 - Math.round(v * 63) },
+  { name: "Decay", lo: "Low", hi: "High", cap: "#52bde6", hint: "Decay (setting 21, 2 to 254).", to: (v) => ({ 21: 2 + Math.round(v * 252) }), from: (s) => (s[21] - 2) / 252, fmt: (v) => 2 + Math.round(v * 252) },
+  { name: "Tune", lo: "-8", hi: "+8", cap: "#efe9d2", hint: "Tune (setting 22, a signed value from -8 to +8).", to: (v) => ({ 22: Math.round(v * 16) - 8 & 255 }), from: (s) => ((s[22] << 24 >> 24) + 8) / 16, fmt: (v) => Math.round(v * 16) - 8 }
+];
+var pendingWrite = null;
+var writing = false;
+async function flushKnobs() {
+  if (!linked() || !inUnit) {
+    pendingWrite = null;
+    return;
+  }
+  unitMarks = marksSig(snapshot());
+  if (writing) return;
+  writing = true;
+  try {
+    while (pendingWrite) {
+      const changes = pendingWrite;
+      pendingWrite = null;
+      const cur = await readSettings();
+      if (!cur) {
+        log("bad", "Could not read the settings, nothing changed");
+        continue;
+      }
+      const vals = Uint8Array.from(cur);
+      for (const i in changes) vals[i] = changes[i];
+      if ("11" in changes || "25" in changes) {
+        const back = vals[11] > vals[25];
+        for (const i of [5, 6]) {
+          vals[i] = vals[i] & ~32 | (back ? 32 : 0);
+          changes[i] = vals[i];
+        }
+      }
+      send(settingsMessage(ch(), vals));
+      log("detail", `Sent ${Object.entries(changes).map(([i, v]) => `setting ${i} = ${v}`).join(", ")}`);
+      await wait(60);
+      if (["0", "1", "2", "3", "4", "11", "13", "25"].some((i) => i in changes)) {
+        await wait(120);
+        const back = await readSettings();
+        if (back) {
+          const bad = Object.keys(changes).filter((i) => back[i] !== vals[i]);
+          log(bad.length ? "bad" : "info", bad.length ? `The sampler holds different values: ${bad.map((i) => `setting ${i} = ${back[i]} (sent ${vals[i]})`).join(", ")}` : "Read back: the sampler holds what was sent");
+        }
+      }
+    }
+  } finally {
+    writing = false;
+  }
+}
+var knobs = KNOBS.map((k) => knob($2("knobs"), {
+  title: k.name,
+  lo: k.lo,
+  hi: k.hi,
+  cap: k.cap,
+  hint: k.hint,
+  fmt: k.fmt,
+  onInput: (v) => {
+    touched.add(k.name);
+    if (!linked() || !inUnit) return;
+    pendingWrite = { ...pendingWrite ?? {}, ...k.to(v) };
+    flushKnobs();
+  }
+}));
+$2("readKnobs").onclick = async () => {
+  busy(true);
+  try {
+    const s = await readSettings();
+    if (!s) {
+      log("bad", "Could not read the sampler settings");
+      return;
+    }
+    KNOBS.forEach((k, i) => knobs[i].set(k.from(s)));
+    touched.clear();
+    showMode(s[4]);
+    showMono(s[14] !== 0);
+    if (!src) {
+      pts = { s: Math.max(130, s[11]), e: Math.max(130, s[25]) };
+      slots.end.put(endPos(pts.e));
+      const ls = (s[1] << 8 | s[0]) - 33280;
+      if (ls >= 0 && ls < 32256) {
+        loopIdx = ls;
+        loopAuto = false;
+      }
+      redraw();
+    }
+    log("info", "Panel matches the sampler");
+    log("detail", `Unit holds: start page ${s[11]}, end page ${s[25]}${s[11] > s[25] ? " (start past end: plays backwards)" : ""}, length ${s[13]}, loop start ${(s[1] << 8 | s[0]).toString(16)} length ${s[3] << 8 | s[2]}, mode ${s[4]}, mono/poly ${s[14] ? "mono" : "poly"}`);
+    const sg = (v) => v << 24 >> 24;
+    log("detail", `Extra settings (read only): 15 = ${sg(s[15])}, 23 transpose? = ${sg(s[23])}, 28 level? = ${s[28]}, 29 = ${sg(s[29])}, 30 = ${sg(s[30])}, 31 = ${sg(s[31])}; other unmapped: 5 = ${s[5]}, 6 = ${s[6]}, 10 = ${s[10]}, 12 = ${s[12]}, 24 = ${s[24]}`);
+  } finally {
+    busy(false);
+  }
+};
+function slot(id, toSetting) {
+  const s = $2(id), th = s.querySelector(".thumb");
+  let x = 0;
+  const put = (v) => {
+    x = Math.max(0, Math.min(1, v));
+    th.style.left = `calc(8px + (100% - 26px) * ${x})`;
+  };
+  const drag = (e) => {
+    const b = s.getBoundingClientRect();
+    put((e.clientX - b.left - 13) / (b.width - 26));
+    toSetting(x);
+  };
+  s.onpointerdown = (e) => {
+    s.setPointerCapture(e.pointerId);
+    if (id === "slotStart") beginStartDrag();
+    drag(e);
+    s.onpointermove = drag;
+  };
+  s.onpointerup = s.onpointercancel = () => {
+    s.onpointermove = null;
+    startAnchor = null;
+  };
+  s.tabIndex = 0;
+  s.setAttribute("role", "slider");
+  s.setAttribute("aria-label", id === "slotStart" ? "Start point" : "End point");
+  s.onkeydown = (e) => {
+    const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key];
+    const to = e.key === "Home" ? 0 : e.key === "End" ? 1 : null;
+    if (step === void 0 && to === null) return;
+    e.preventDefault();
+    if (id === "slotStart") beginStartDrag();
+    put(to ?? x + step * (e.shiftKey ? 0.05 : 5e-3));
+    toSetting(x);
+    startAnchor = null;
+  };
+  put(id === "slotEnd" ? 1 : 0);
+  return { put };
+}
+var redraw = () => {
+  if (lastWords) draw(lastWords);
+  retarget();
+};
+var writeSettings = () => {
+  if (!inUnit) return;
+  if ((fades.i || fades.o) && fadeKey() !== fadeAt) {
+    pendingWrite = null;
+    setInUnit(false);
+    return;
+  }
+  pendingWrite = { ...pendingWrite ?? {}, 11: wStart(), 25: pts.e, 13: Math.max(0, Math.abs(pts.e - wStart()) - 1), ...loopChanges() };
+  flushKnobs();
+};
+var writeLoop = writeSettings;
+var unTie = (wasRev) => {
+  if (precise || !prepared || pts.s !== pts.e) return;
+  if (wasRev) {
+    if (pts.s < maxEnd()) pts.s++;
+    else if (pts.e > 130) pts.e--;
+  } else if (pts.e < maxEnd()) pts.e++;
+  else pts.s = Math.max(130, pts.s - 1);
+};
+var writePts = () => {
+  fixLoop();
+  writeSettings();
+  redraw();
+};
+var slots = {
+  start: slot("slotStart", (x) => {
+    const p = 130 + Math.round(x * (endHi() - 130));
+    if (precise) {
+      setStartWord(Math.round(x * prepared.used));
+    } else {
+      const wr = pts.s > pts.e;
+      pts.s = Math.min(p, maxEnd());
+      unTie(wr);
+      slots.start.put(startPos());
+      slots.end.put(endPos(pts.e));
+      writePts();
+    }
+  }),
+  end: slot("slotEnd", (x) => {
+    const wr = pts.s > pts.e;
+    pts.e = 130 + Math.round(x * (endHi() - 130));
+    if (precise && !rev) pts.e = Math.max(131, pts.e);
+    if (prepared && pts.e > maxEnd()) {
+      pts.e = maxEnd();
+      slots.end.put(endPos(pts.e));
+    }
+    unTie(wr);
+    slots.start.put(startPos());
+    followEnd();
+    writePts();
+  })
+  // the End cannot pass the last page inside the sound (it would be out of view, looping through padding)
+};
+var startAnchor = null;
+var beginStartDrag = () => {
+  if (prepared) startAnchor = { e: endIdx(), l: loopIdx };
+};
+function setStartWord(w) {
+  const endNow = startAnchor ? startAnchor.e : endIdx(), nw = Math.max(0, Math.min(prepared.used, Math.round(w))), lim = Math.min(endNow, prepared.used - 256);
+  if (!rev && nw > lim) {
+    rev = true;
+    sW = nw;
+    pts.e = Math.max(130, Math.min(wStart() - 1, 130 + Math.floor(Math.max(0, endNow - 1) / PAGE)));
+  } else if (rev && nw <= lim) {
+    rev = false;
+    sW = nw;
+    pts.e = Math.min(maxEnd(), relPage(endNow, sW));
+  } else {
+    sW = nw;
+    if (!rev) pts.e = Math.min(maxEnd(), relPage(endNow, sW));
+    else pts.e = Math.max(130, Math.min(wStart() - 1, 130 + Math.floor(Math.max(0, endNow - 1) / PAGE)));
+  }
+  slots.end.put(endPos(pts.e));
+  if (!rev && loopIdx !== null) loopIdx = Math.max(sW, startAnchor?.l ?? loopIdx);
+  if (rev || startAnchor?.l == null) followEnd();
+  slots.start.put(startPos());
+  writePts();
+}
+function followEnd() {
+  if (loopAuto && loopIdx !== null && prepared) loopIdx = defaultLoop();
+}
+var swapMemo = null;
+$2("reverse").onclick = () => {
+  if (!prepared) return;
+  if (!precise && pts.s === pts.e) {
+    log("info", "Reverse: Start and End are in the same place");
+    return;
+  }
+  const snap = () => ({ rev, sW, s: pts.s, e: pts.e, l: loopIdx, a: loopAuto }), sig = (o) => JSON.stringify(o), put = (o) => {
+    rev = o.rev;
+    sW = o.sW;
+    pts.s = o.s;
+    pts.e = o.e;
+    loopIdx = o.l;
+    loopAuto = o.a;
+    lastRev = isRev();
+  };
+  const before = snap();
+  if (swapMemo && sig(swapMemo.after) === sig(before)) {
+    put(swapMemo.before);
+    swapMemo = { before, after: swapMemo.before };
+    slots.start.put(startPos());
+    slots.end.put(endPos(pts.e));
+    writePts();
+    log("info", `Reversed: the sound now plays ${isRev() ? "backwards" : "forwards"} (Start and End swapped; the audio is unchanged)`);
+    return;
+  }
+  const s0 = startIdx(), e0 = endIdx(), was = isRev(), auto0 = loopAuto, f = loopIdx === null ? null : Math.max(0, Math.min(1, (was ? s0 - loopIdx : loopIdx - s0) / Math.max(1, Math.abs(e0 - s0))));
+  if (!precise) [pts.s, pts.e] = [pts.e, pts.s];
+  else if (!rev) {
+    const s = sW;
+    rev = true;
+    sW = Math.min(prepared.used, e0 + 1);
+    pts.e = Math.max(130, Math.min(wStart() - 1, 130 + Math.floor(Math.max(0, s - 1) / PAGE)));
+  } else {
+    rev = false;
+    sW = Math.max(0, Math.min(maxSW(false), e0 - 1));
+    pts.e = Math.min(maxEnd(), relPage(s0, sW));
+  }
+  const s1 = startIdx(), e1 = endIdx(), now = isRev();
+  lastRev = now;
+  if (f !== null) {
+    if (auto0) {
+      loopAuto = true;
+      loopIdx = defaultLoop();
+    } else {
+      let li = Math.round(now ? s1 - f * (s1 - e1) : s1 + f * (e1 - s1));
+      if (!precise) {
+        li = snapLoop(li);
+        if (now && li > s1) li -= PAGE;
+      }
+      loopIdx = now ? Math.max(e1 + MIN_LOOP, Math.min(li, s1)) : Math.max(sW, Math.min(li, e1 - MIN_LOOP));
+      loopAuto = false;
+    }
+  }
+  swapMemo = { before, after: snap() };
+  slots.start.put(startPos());
+  slots.end.put(endPos(pts.e));
+  writePts();
+  swapMemo.after = snap();
+  log("info", `Reversed: the sound now plays ${now ? "backwards" : "forwards"} (Start and End swapped; the audio is unchanged)`);
+};
+function setPrecise(b) {
+  const was = prepared ? endIdx() : null, wasStart = prepared ? startIdx() : 0;
+  precise = b;
+  if (prepared) {
+    if (b) {
+      rev = was < wasStart;
+      sW = Math.min(wasStart, maxSW(rev));
+      pts.e = rev ? absPage(was) : Math.min(maxEnd(), relPage(was, sW));
+    } else {
+      pts.s = Math.max(130, Math.min(maxEnd(), 130 + Math.round(wasStart / PAGE)));
+      rev = false;
+      pts.e = absPage(was);
+    }
+    slots.end.put(endPos(pts.e));
+    slots.start.put(b ? startPos() : startPos());
+  }
+  $2("lampPrecise").classList.toggle("on", b);
+  if (!b && loopIdx !== null) {
+    loopIdx = snapLoop(loopIdx);
+    writeLoop();
+  }
+  redraw();
+  refresh();
+}
+$2("precise").onclick = () => setPrecise(!precise);
+window.__setPrecise = setPrecise;
+window.__auditionOn = () => !!auditionNode;
+window.__auditionQd = (b, k, on) => auditionQd(b, k, on);
+window.__moveMarker = (k, i) => moveMarker(k, i);
+setPrecise(precise);
+$2("bestMatch").onclick = () => {
+  if (!prepared || !precise || loopIdx === null) return;
+  const w = prepared.words, K = 64, W = 6e3, r = isRev();
+  let best = loopIdx, bs = Infinity, lo, hi;
+  if (r) {
+    const e = Math.max(1, endIdx());
+    lo = Math.max(e + MIN_LOOP, loopIdx - W);
+    hi = Math.min(startIdx(), loopIdx + W, w.length - K - 1);
+    if (hi < lo) {
+      log("info", "Best match: the loop is too short to search");
+      return;
+    }
+    for (let L = lo; L <= hi; L++) {
+      let s = 0;
+      for (let i = 0; i < K; i++) {
+        const d = w[L + i] - w[e - 1 + i];
+        s += d * d;
+      }
+      s += 2e-3 * Math.abs(L - loopIdx);
+      if (s < bs) {
+        bs = s;
+        best = L;
+      }
+    }
+  } else {
+    const last = Math.min(endIdx(), w.length - 1);
+    lo = Math.max(sW + K, loopIdx - W);
+    hi = Math.min(last - MIN_LOOP, loopIdx + W);
+    if (hi < lo) {
+      log("info", "Best match: the loop is too short to search");
+      return;
+    }
+    for (let L = lo; L <= hi; L++) {
+      let s = 0;
+      for (let i = 1; i <= K; i++) {
+        const d = w[L - i] - w[last + 1 - i];
+        s += d * d;
+      }
+      s += 2e-3 * Math.abs(L - loopIdx);
+      if (s < bs) {
+        bs = s;
+        best = L;
+      }
+    }
+  }
+  const was = loopIdx;
+  loopAuto = false;
+  loopIdx = best;
+  writeLoop();
+  redraw();
+  log("info", `Best match: loop ${r ? "marker" : "start"} moved ${best - was >= 0 ? "+" : ""}${best - was} words, to word ${best} (average level difference ${Math.sqrt(bs / K).toFixed(1)} of 4095)`);
+};
+function hitMarker(e) {
+  if (view !== "src" || !prepared) return null;
+  const r = $2("wave").getBoundingClientRect(), x = e.clientX - r.left, u = prepared.used, cand = [];
+  if (loopIdx !== null) cand.push(["loop", loopIdx]);
+  cand.push(["start", startIdx()], ["end", endIdx()]);
+  const c = $2("wave"), sc = c.width / r.width, y = e.clientY - r.top, g = c.getContext("2d");
+  g.save();
+  g.font = "bold 12px sans-serif";
+  for (const [k, idx] of cand.concat(loopIdx !== null && !precise ? [] : [])) {
+    const lx = zx(idx / u, r.width), name = k === "loop" ? "splice" : k, w = g.measureText(name).width / sc, edge = lx * sc > c.width - 40, x0 = edge ? lx - 4 - w : lx + 4, ly = (k === "end" ? c.height - 6 : k === "loop" ? 26 : 12) / sc;
+    if (x >= x0 - 2 && x <= x0 + w + 2 && Math.abs(y - (ly - 4)) <= 8) {
+      g.restore();
+      return k;
+    }
+  }
+  g.restore();
+  let best = null, bd = 6;
+  for (const [k, idx] of cand) {
+    const d = Math.abs(x - zx(idx / u, r.width));
+    if (d < bd) {
+      bd = d;
+      best = k;
+    }
+  }
+  return best;
+}
+function moveMarker(kind, idx) {
+  if (kind === "start") {
+    if (precise) setStartWord(idx);
+    else {
+      const wr = pts.s > pts.e;
+      pts.s = Math.max(130, Math.min(maxEnd(), 130 + Math.round(idx / PAGE)));
+      unTie(wr);
+      slots.start.put(startPos());
+      slots.end.put(endPos(pts.e));
+      writePts();
+    }
+  } else if (kind === "end") {
+    const wr = pts.s > pts.e;
+    if (precise && !rev && idx < sW) {
+      rev = true;
+      pts.e = Math.min(absPage(idx), Math.max(130, wStart() - 1));
+    } else if (precise && rev && idx >= sW) {
+      rev = false;
+      pts.e = Math.min(maxEnd(), relPage(idx, sW));
+    } else pts.e = precise && !rev ? Math.min(maxEnd(), relPage(idx, sOff())) : precise ? Math.min(clampE(130 + Math.round((idx - sOff() + 1) / PAGE)), Math.max(130, wStart() - 1)) : clampE(130 + Math.round((idx - sOff() + 1) / PAGE));
+    unTie(wr);
+    slots.end.put(endPos(pts.e));
+    slots.start.put(startPos());
+    followEnd();
+    writePts();
+  } else {
+    loopAuto = false;
+    loopFree = false;
+    loopIdx = isRev() ? Math.max(endIdx() + MIN_LOOP, Math.min(Math.round(idx), startIdx())) : Math.max(0, Math.min(Math.round(idx), endIdx() - MIN_LOOP));
+    if (!precise) loopIdx = snapLoop(loopIdx);
+    fixLoop();
+    writeLoop();
+    redraw();
+  }
+}
+function selection() {
+  if (!src || !sel || view !== "src" || Math.abs(sel.b - sel.a) < 2e-3) return { partial: false, i0: 0, i1: src ? visN() : 0 };
+  const n = visN();
+  return { partial: true, i0: Math.round(Math.min(sel.a, sel.b) * n), i1: Math.round(Math.max(sel.a, sel.b) * n) };
+}
+function selText() {
+  const r = selection();
+  if (!src) {
+    $2("selInfo").textContent = "";
+    return;
+  }
+  $2("selInfo").textContent = r.partial ? `Selection ${(r.i0 / src.rate).toFixed(3)} s to ${(r.i1 / src.rate).toFixed(3)} s (${((r.i1 - r.i0) / src.rate).toFixed(3)} s)` : "No selection: the tools act on the whole sound";
+}
+var canvasX = (e) => {
+  const b = $2("wave").getBoundingClientRect(), x = Math.max(0, Math.min(1, (e.clientX - b.left) / b.width));
+  return Math.max(0, Math.min(1, zoom.a + x * (zoom.b - zoom.a)));
+};
+var selecting = false;
+var fadeDrag = null;
+var markDrag = null;
+function hitHandle(e) {
+  const c = $2("wave"), r = c.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, w = r.width, ky = r.height / c.height;
+  for (const dir of ["in", "out"]) {
+    const hx = zx(fadeHandleAt(dir), w);
+    if (Math.hypot(x - hx, y - (r.height - KNOB_FROM_BOTTOM * ky)) <= 12) return dir;
+  }
+  return null;
+}
+$2("wave").onpointerdown = (e) => {
+  if (view !== "src" || !src || refresh.busy) return;
+  $2("wave").setPointerCapture(e.pointerId);
+  const hd = hitHandle(e);
+  if (hd) {
+    fadeDrag = hd;
+    return;
+  }
+  const mk = hitMarker(e);
+  if (mk) {
+    markDrag = mk;
+    if (mk === "start") beginStartDrag();
+    return;
+  }
+  selecting = true;
+  sel = { a: canvasX(e), b: canvasX(e) };
+  draw(lastWords);
+  selText();
+  refresh();
+};
+$2("wave").onpointermove = (e) => {
+  if ((fadeDrag || markDrag || selecting) && !(e.buttons & 1)) {
+    fadeDrag = null;
+    markDrag = null;
+    selecting = false;
+    startAnchor = null;
+  }
+  if (fadeDrag) {
+    setInUnit(false);
+    const x = canvasX(e);
+    const A = fadeA(), B = fadeB(), room = Math.max(0, Math.abs(B - A) - 0.02);
+    if (fadeDrag === "in") fades.i = Math.max(0, Math.min(room - fades.o, fadeDir() * (x - A)));
+    else fades.o = Math.max(0, Math.min(room - fades.i, fadeDir() * (B - x)));
+    if (fades.i < 4e-3) fades.i = 0;
+    if (fades.o < 4e-3) fades.o = 0;
+    prepare2();
+    return;
+  }
+  if (markDrag) {
+    moveMarker(markDrag, canvasX(e) * prepared.used);
+    return;
+  }
+  if (view === "src") $2("wave").style.cursor = hitHandle(e) || hitMarker(e) ? "ew-resize" : "crosshair";
+  if (!selecting) return;
+  sel.b = canvasX(e);
+  draw(lastWords);
+  selText();
+  refresh();
+};
+$2("wave").onpointerup = $2("wave").onpointercancel = () => {
+  fadeDrag = null;
+  markDrag = null;
+  selecting = false;
+  startAnchor = null;
+  if (sel && Math.abs(sel.b - sel.a) < 2e-3) {
+    sel = null;
+    draw(lastWords);
+  }
+  selText();
+  refresh();
+};
+function edit(fn, keepSel = false) {
+  if (!src) return;
+  const r = selection();
+  setInUnit(false);
+  const n0 = src.mono.length;
+  src = { ...src, mono: fn(Float32Array.from(src.mono), r.i0, r.i1) };
+  if (!keepSel) sel = null;
+  reprepare(src.mono.length !== n0);
+  selText();
+}
+var clip = (x) => Math.max(-1, Math.min(1, x));
+function reshape(a, b, keep) {
+  if (!prepared) return;
+  const ratio = perWord(), m0 = { s: startIdx() * ratio, e: Math.min(endIdx() + 1, prepared.used) * ratio, l: loopIdx === null ? null : loopIdx * ratio }, was = loopAuto;
+  const map = (x) => keep ? Math.max(0, Math.min(b - a, x - a)) : x <= a ? x : x >= b ? x - (b - a) : a;
+  resetZoom();
+  const tuned = loopIdx !== null && !loopAuto;
+  if (!keyLocked) {
+    keyAuto = true;
+    keyHold = false;
+  }
+  try {
+    edit((m) => {
+      if (keep) return m.slice(a, b);
+      const o = new Float32Array(m.length - (b - a));
+      o.set(m.subarray(0, a));
+      o.set(m.subarray(b), a);
+      return o;
+    });
+  } finally {
+    keepKey = false;
+  }
+  const r2 = perWord(), u = prepared.used, toW = (x) => Math.round(x / r2);
+  const wasRev = isRev();
+  const sNew = keep ? wasRev ? u : 0 : toW(map(m0.s)), eNew = keep ? wasRev ? 0 : u : toW(map(m0.e));
+  rev = false;
+  if (precise) {
+    rev = sNew > eNew;
+    sW = Math.max(0, Math.min(sNew, maxSW(rev, u)));
+    pts = { s: 130, e: 131 };
+  } else {
+    sW = 0;
+    pts = { s: Math.max(130, Math.min(255, 130 + Math.round(sNew / PAGE))), e: 131 };
+  }
+  pts.e = rev ? clampE(130 + Math.round((eNew - 1) / PAGE)) : Math.max(131, clampE(130 + Math.floor((eNew + 4 - sOff()) / PAGE)));
+  const inside = m0.l !== null && (!keep || m0.l >= a && m0.l < b), lW = inside ? toW(map(m0.l)) : null;
+  if (lW !== null && lW >= sW && lW <= endIdx() - MIN_LOOP) {
+    loopIdx = precise ? lW : snapLoop(lW);
+    loopAuto = was;
+  } else {
+    loopAuto = true;
+    loopIdx = defaultLoop();
+  }
+  slots.start.put(startPos());
+  slots.end.put(endPos(pts.e));
+  redraw();
+  if (tuned && precise && loopIdx !== null && loopAuto === false) {
+    $2("bestMatch").onclick();
+    log("info", "The loop was set by hand, so Best match tuned it again for the new sound");
+  }
+}
+$2("editCrop").onclick = () => {
+  if (!prepared) return;
+  const ratio = perWord(), s0 = Math.min(startIdx(), endIdx() + 1), e0 = Math.max(startIdx(), endIdx() + 1), a = Math.max(0, Math.round(s0 * ratio)), b = Math.min(src.mono.length, Math.round(Math.min(e0, prepared.used) * ratio));
+  if (b - a < 256) {
+    log("info", "Crop: Start and End are too close together");
+    return;
+  }
+  reshape(a, b, true);
+  log("info", `Cropped to ${b - a} samples, from the start marker to the end marker`);
+};
+$2("editTrim").onclick = () => {
+  const r = selection();
+  reshape(r.i0, r.i1, true);
+};
+$2("editCut").onclick = () => {
+  const r = selection();
+  reshape(r.i0, r.i1, false);
+};
+$2("editSilence").onclick = () => edit((m, a, b) => {
+  m.fill(0, a, b);
+  return m;
+}, true);
+$2("editGainUp").onclick = () => edit((m, a, b) => {
+  for (let i = a; i < b; i++) m[i] = clip(m[i] * 1.2589);
+  return m;
+}, true);
+$2("editNorm").onclick = () => edit((m, a, b) => {
+  let pk = 0;
+  for (let i = a; i < b; i++) pk = Math.max(pk, Math.abs(m[i]));
+  if (pk > 0) for (let i = a; i < b; i++) m[i] = clip(m[i] * 0.98 / pk);
+  return m;
+}, true);
+$2("editGainDown").onclick = () => edit((m, a, b) => {
+  for (let i = a; i < b; i++) m[i] *= 0.7943;
+  return m;
+}, true);
+for (const id of ["fadeCurveIn", "fadeCurveOut"]) $2(id).onchange = () => {
+  if (src && (fades.i || fades.o)) {
+    setInUnit(false);
+    prepare2();
+  } else if (src) draw(lastWords);
+};
+var snapshot = () => ({ src, key: $2("key").value, keyAuto, keyHold, pts: { ...pts }, sW, loopIdx, loopAuto, rev, fi: fades.i, fo: fades.o, ci: $2("fadeCurveIn").value, co: $2("fadeCurveOut").value, mode: curMode, mono, precise });
+var monoIds = /* @__PURE__ */ new WeakMap();
+var monoId = 0;
+var soundSig = (h) => [h.src ? monoIds.get(h.src.mono) ?? (monoIds.set(h.src.mono, ++monoId), monoId) : 0, h.key, h.fi, h.fo, h.ci, h.co].join("|");
+var marksSig = (h) => [h.pts.s, h.pts.e, h.sW, h.loopIdx, h.rev, h.mode, h.mono].join("|");
+var sigOf = (h) => [h.src ? monoIds.get(h.src.mono) ?? (monoIds.set(h.src.mono, ++monoId), monoId) : 0, h.key, h.pts.s, h.pts.e, h.sW, h.loopIdx, h.loopAuto, h.rev, h.fi, h.fo, h.ci, h.co, h.mode, h.mono].join("|");
+var base = snapshot();
+var pointerDown = false;
+window.__fadeInfo = () => ({ i: fades.i, o: fades.o, out: fadeHandleAt("out") });
+function commitHistory() {
+  const ae = document.activeElement;
+  if (pointerDown || fadeDrag || markDrag || ae && ae.tagName === "INPUT" && ["number", "text"].includes(ae.type)) return;
+  const now = snapshot();
+  if (base.precise === now.precise && base.src && now.src && sigOf(base) !== sigOf(now)) {
+    history.push(base);
+    if (history.length > 20) history.shift();
+    refresh();
+  }
+  base = now;
+  if (inUnit) {
+    unitSound = soundSig(now);
+    unitMarks = marksSig(now);
+  } else if (unitSound !== null && src && soundSig(now) === unitSound && marksSig(now) === unitMarks) setInUnit(true);
+}
+setInterval(commitHistory, 200);
+document.addEventListener("pointerdown", () => {
+  commitHistory();
+  pointerDown = true;
+}, true);
+document.addEventListener("keydown", () => commitHistory(), true);
+document.addEventListener("pointerup", () => {
+  pointerDown = false;
+}, true);
+document.addEventListener("pointercancel", () => {
+  pointerDown = false;
+}, true);
+function undo() {
+  commitHistory();
+  if (!history.length) return;
+  const h = history.pop();
+  setInUnit(false);
+  if (h.precise !== precise) {
+    setPrecise(h.precise);
+    $2("lampPrecise").classList.toggle("on", precise);
+  }
+  src = h.src;
+  $2("name").textContent = src ? src.name : "";
+  sel = null;
+  fades.i = h.fi;
+  fades.o = h.fo;
+  $2("fadeCurveIn").value = h.ci;
+  $2("fadeCurveOut").value = h.co;
+  $2("key").value = h.key;
+  keyAuto = h.keyAuto;
+  keyHold = h.keyHold;
+  showMode(h.mode);
+  showMono(h.mono);
+  prepare2();
+  pts = { ...h.pts };
+  sW = h.sW;
+  rev = h.rev;
+  loopIdx = h.loopIdx;
+  loopAuto = h.loopAuto;
+  slots.end.put(endPos(pts.e));
+  slots.start.put(startPos());
+  redraw();
+  base = snapshot();
+  selText();
+  refresh();
+}
+$2("editUndo").onclick = undo;
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) {
+    e.preventDefault();
+    undo();
+  }
+});
+function loadReadSound(name = "sampler memory", onUnit = true, keepTail = false) {
+  if (!readWords) return;
+  let last = readWords.length;
+  while (!keepTail && last > 256 && Math.abs(readWords[last - 1] - REST) < 16) last--;
+  const m = new Float32Array(last);
+  for (let i = 0; i < last; i++) m[i] = (readWords[i] - REST) / 2040;
+  src = { name, rate: keyRate(key()) * (1 - (+$2("trim").value || 0) / 100), mono: m, root: null, unit: readSnap };
+  $2("name").textContent = src.name;
+  sel = null;
+  fades.i = fades.o = 0;
+  newSound = true;
+  keyHold = true;
+  setInUnit(onUnit);
+  prepare2();
+  selText();
+  log("info", `${onUnit ? "Read" : "Opened"} the sound into the editor (${(last / src.rate).toFixed(2)} s); Undo goes back to the sound that was there before`);
+}
+$2("demo").onclick = () => {
+  demo = new VirtualS612();
+  window.__demo = demo;
+  outPort = inPort = null;
+  status("Demo unit (simulated)");
+  refresh();
+};
+$2("connect").onclick = async () => {
+  try {
+    if (!navigator.requestMIDIAccess) throw new Error("this browser has no Web MIDI (use Chrome or Edge)");
+    midi = await navigator.requestMIDIAccess({ sysex: true });
+    const fill = (sel2, ports) => {
+      sel2.innerHTML = "";
+      for (const p of ports) sel2.add(new Option(p.name, p.id));
+    };
+    fill($2("out"), [...midi.outputs.values()]);
+    fill($2("inp"), [...midi.inputs.values()]);
+    for (const [id, name] of [["out", saved.out], ["inp", saved.inp]]) {
+      const o = [...$2(id).options].find((x) => x.text === name);
+      if (o) $2(id).value = o.value;
+    }
+    const choose = () => {
+      demo = null;
+      outPort = midi.outputs.get($2("out").value);
+      inPort = midi.inputs.get($2("inp").value);
+      for (const i of midi.inputs.values()) i.onmidimessage = null;
+      if (inPort) inPort.onmidimessage = (e) => onBytes(e.data);
+      saveMidi();
+      status(outPort && inPort ? `Out: ${outPort.name}   In: ${inPort.name}` : "Choose a MIDI out and in port");
+      refresh();
+      navigator.permissions?.query({ name: "midi", sysex: true }).then((p) => {
+        if (p.state === "granted" && saved.out) $2("connect").onclick();
+      }).catch(() => {
+      });
+    };
+    $2("out").onchange = choose;
+    $2("inp").onchange = choose;
+    choose();
+  } catch (e) {
+    const refused = ["SecurityError", "NotAllowedError"].includes(e.name), why = refused ? "MIDI permission was refused. Allow MIDI with System Exclusive for this page in the browser's site settings, then press Connect again" : e.message;
+    status(`Could not open MIDI: ${why}`);
+    log("bad", why);
+  }
+};
+refresh();
+try {
+  navigator.permissions?.query({ name: "midi", sysex: true }).then((p) => {
+    if (p.state === "granted" && saved.out) $2("connect").onclick();
+  }).catch(() => {
+  });
+} catch {
+}
+window.__prepared = () => prepared;
+window.__maxEnd = () => maxEnd();
+var auditionNode = null;
+function auditionStop() {
+  if (auditionNode) {
+    try {
+      auditionNode.stop();
+    } catch {
+    }
+    auditionNode = null;
+  }
+}
+function auditionQd(bytes, k, on) {
+  auditionStop();
+  if (!on) return;
+  stopListen();
+  const img = importQD(bytes), w = img.words, s = img.settings, sp = s[11], ep = s[25], rev2 = sp > ep, mode = s[4];
+  let a = (Math.min(sp, ep) - 130) * PAGE, b = (Math.max(sp, ep) - 130) * PAGE;
+  if (!(b - a >= 16) || a < 0) {
+    a = 0;
+    b = w.length;
+  }
+  b = Math.min(b, w.length);
+  const n = b - a;
+  let seg = new Float32Array(n);
+  for (let i = a; i < b; i++) seg[i - a] = (w[i] - REST) / 2040;
+  if (rev2) seg.reverse();
+  const ls = (s[1] << 8 | s[0]) - 33280, within = ls >= Math.min(a, b - 1) && ls < b ? ls : null;
+  const kk = k >= 36 && k <= 72 ? k : key(), rate = Math.max(3e3, Math.round(keyRate(kk) * (1 - (+$2("trim").value || 0) / 100)));
+  let data = seg, loopFrom = null;
+  if (mode !== 1 && mode !== 3) unitRelease(seg, rate);
+  if (mode === 1) {
+    data = new Float32Array(n * 2);
+    data.set(seg);
+    data.set(Float32Array.from(seg).reverse(), n);
+    loopFrom = 0;
+  } else if (mode === 3) {
+    const blk = rev2 ? ls > a && ls < w.length ? Array.from({ length: ls - a }, (_, i) => (w[ls - i] - REST) / 2040) : null : ls >= 0 && ls < b - 8 ? Array.from({ length: b - ls }, (_, i) => (w[ls + i] - REST) / 2040) : null;
+    if (blk && blk.length >= 8) {
+      data = new Float32Array(n + blk.length);
+      data.set(seg);
+      data.set(blk, n);
+      loopFrom = n;
+    } else loopFrom = within === null ? 0 : rev2 ? b - 1 - within : within - a;
+  }
+  ctx ??= new AudioContext();
+  ctx.resume?.();
+  const sr = ctx.sampleRate, ratio = sr / rate;
+  let y, lf = 0;
+  if (loopFrom !== null) {
+    const pre = loopFrom, lp = data.subarray(pre), L2 = lp.length, N = Math.max(1, Math.round(L2 * ratio)), n1 = Math.round(pre * ratio);
+    const head = pre ? resample(Float32Array.from([...data.subarray(0, pre), ...lp, ...lp]), rate, sr).subarray(0, n1) : new Float32Array(0);
+    const trip = new Float32Array(3 * L2);
+    trip.set(lp, 0);
+    trip.set(lp, L2);
+    trip.set(lp, 2 * L2);
+    const mid = resample(trip, L2, N).subarray(N, 2 * N);
+    y = new Float32Array(head.length + mid.length);
+    y.set(head);
+    y.set(mid, head.length);
+    lf = head.length;
+  } else y = resample(data, rate, sr);
+  const buf = ctx.createBuffer(1, y.length, sr);
+  buf.copyToChannel(y, 0);
+  const node = ctx.createBufferSource();
+  node.buffer = buf;
+  node.connect(ctx.destination);
+  if (loopFrom !== null) {
+    node.loop = true;
+    node.loopStart = lf / sr;
+    node.loopEnd = y.length / sr;
+  }
+  node.onended = () => {
+    if (auditionNode === node) auditionNode = null;
+  };
+  node.start();
+  auditionNode = node;
+  window.__audition = { key: kk, rate, words: data.length, rev: rev2, mode, loop: loopFrom !== null, loopFrom };
+}
+library = initLibrary({
+  log,
+  busy,
+  canSend: () => linked() && !refresh.busy && $2("allowWrite").checked,
+  canFetch: () => !$2("read").disabled,
+  makeQd,
+  open: (bytes, name, k) => {
+    loadQD(bytes, name);
+    if (k >= 36 && k <= 72 && k !== key()) changeKey(k);
+  },
+  fetchFromSampler: async () => {
+    await $2("read").onclick();
+    return !!readWords && readWords.length === BLOCKS * BLOCK_WORDS;
+  },
+  send: () => $2("send").click(),
+  audition: auditionQd
+});
+window.__library = library;
+window.__markers = () => ({ startIdx: prepared ? startIdx() : null, endIdx: prepared ? endIdx() : null, inUnit, pts, sW, rev, loopAuto, loopIdx, precise, used: prepared?.used, view, keyAuto });
+window.__setLoop = (i) => {
+  loopIdx = i;
+  redraw();
+};
+document.addEventListener("change", (e) => {
+  if (e.target.matches?.("select, input[type=checkbox], input[type=range]")) e.target.blur();
+}, true);
+document.addEventListener("pointerup", (e) => {
+  const el2 = e.target;
+  if (el2.matches?.("input[type=range], input[type=checkbox]")) setTimeout(() => el2.blur(), 0);
+}, true);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.matches?.("input")) e.target.blur();
+}, true);
+window.__listening = () => !!listenNode;
+window.addEventListener("resize", () => {
+  if (lastWords) draw(lastWords);
+});
+window.__playPos = () => playPos;
+window.__unitDbg = () => ({ unitSound, unitMarks, now: soundSig(snapshot()), nowMarks: marksSig(snapshot()), inUnit });
+window.__forgetUnit = () => {
+  unitSound = null;
+  unitMarks = null;
+  setInUnit(false);
+};
+window.__inUnit = (b) => setInUnit(b);
+function showZoomBar() {
+  const t = $2("zoomthumb");
+  t.style.left = zoom.a * 100 + "%";
+  t.style.width = Math.max(1, (zoom.b - zoom.a) * 100) + "%";
+  $2("zoombar").classList.toggle("zoomed", zoom.b - zoom.a < 0.999);
+}
+$2("wave").addEventListener("wheel", (e) => {
+  if (view !== "src" || !prepared) return;
+  e.preventDefault();
+  const r = $2("wave").getBoundingClientRect(), cx = (e.clientX - r.left) / r.width, zw = zoom.b - zoom.a;
+  if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+    const d = (e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX) / r.width * zw;
+    setZoom(zoom.a + d, zoom.b + d);
+    return;
+  }
+  const nw = Math.max(0, Math.min(1, zw * Math.exp(e.deltaY * 15e-4))), at = zoom.a + cx * zw;
+  setZoom(at - cx * nw, at - cx * nw + nw);
+}, { passive: false });
+{
+  const bar = $2("zoombar");
+  let drag = null;
+  const place = (e, grab) => {
+    const r = bar.getBoundingClientRect(), f = (e.clientX - r.left) / r.width, zw = zoom.b - zoom.a;
+    const a = grab === null ? f - zw / 2 : f - grab;
+    setZoom(a, a + zw);
+  };
+  bar.onpointerdown = (e) => {
+    if (!prepared || view !== "src") return;
+    bar.setPointerCapture(e.pointerId);
+    const r = bar.getBoundingClientRect(), f = (e.clientX - r.left) / r.width;
+    drag = f >= zoom.a && f <= zoom.b ? f - zoom.a : null;
+    place(e, drag);
+    bar.onpointermove = (ev) => place(ev, drag);
+  };
+  bar.onpointerup = bar.onpointercancel = () => {
+    bar.onpointermove = null;
+  };
+  bar.ondblclick = () => {
+    resetZoom();
+    if (lastWords) draw(lastWords);
+  };
+}
+window.__zoom = () => ({ ...zoom });
+
+</script>
+</body>
+</html>
