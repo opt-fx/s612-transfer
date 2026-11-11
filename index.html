@@ -283,7 +283,7 @@ footer.credit svg { width:18px; height:18px; flex:none; transform:translateY(-1p
   </div>
   </div>
 </main>
-<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 136">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
+<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 137">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
 <script type="module">
 // src/s612.js
 var TYPE = { WAVE: 33, SETTINGS: 65 };
@@ -3043,6 +3043,7 @@ $2("demo").onclick = () => {
 $2("connect").onclick = async () => {
   try {
     if (!navigator.requestMIDIAccess) throw new Error("this browser has no Web MIDI (use Chrome or Edge)");
+    if (midi) for (const i of midi.inputs.values()) i.onmidimessage = null;
     midi = await navigator.requestMIDIAccess({ sysex: true });
     const fill = (sel2, ports) => {
       sel2.innerHTML = "";
