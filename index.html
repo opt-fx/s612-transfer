@@ -283,7 +283,7 @@ footer.credit svg { width:18px; height:18px; flex:none; transform:translateY(-1p
   </div>
   </div>
 </main>
-<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 137">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
+<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 138">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
 <script type="module">
 // src/s612.js
 var TYPE = { WAVE: 33, SETTINGS: 65 };
@@ -1344,7 +1344,11 @@ var busy = (b) => {
   refresh.busy = b;
   refresh();
 };
+var rxBytes = 0;
+var rxLast = "";
 function onBytes(bytes) {
+  rxBytes += bytes.length;
+  rxLast = toHex(bytes.slice(0, 12));
   rx = Uint8Array.from([...rx, ...bytes]);
   const { messages, rest } = splitSysex(rx);
   rx = rest;
@@ -2396,6 +2400,7 @@ $2("readKnobs").onclick = async () => {
     const s = await readSettings();
     if (!s) {
       log("bad", "Could not read the sampler settings");
+      log("info", `in ${inPort ? `${inPort.name} (${inPort.state}, ${inPort.connection})` : "none"}; out ${outPort ? `${outPort.name} (${outPort.state}, ${outPort.connection})` : "none"}; bytes heard since connecting: ${rxBytes}${rxLast ? `, last ${rxLast}` : ""}`);
       return;
     }
     KNOBS.forEach((k, i) => knobs[i].set(k.from(s)));
@@ -3061,6 +3066,9 @@ $2("connect").onclick = async () => {
       inPort = midi.inputs.get($2("inp").value);
       for (const i of midi.inputs.values()) i.onmidimessage = null;
       if (inPort) inPort.onmidimessage = (e) => onBytes(e.data);
+      rxBytes = 0;
+      for (const p of [inPort, outPort]) p?.open?.().catch?.(() => {
+      });
       saveMidi();
       status(outPort && inPort ? `Out: ${outPort.name}   In: ${inPort.name}` : "Choose a MIDI out and in port");
       refresh();
