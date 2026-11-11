@@ -151,7 +151,7 @@ footer.credit svg { width:18px; height:18px; flex:none; transform:translateY(-1p
       <div class="ports">
         <label for="out">Out</label><select id="out"></select>
         <label for="inp">In</label><select id="inp"></select>
-        <label for="ch">Unit</label><span class="unit"><input id="ch" type="number" min="0" max="8" value="0" title="The sampler's MIDI channel number as shown on its display (0 is omni)"><i class="lamp green" id="lampLink" title="Lit when a MIDI link (or the demo unit) is ready"></i></span>
+        <label for="ch">Unit</label><span class="unit"><input id="ch" type="number" min="0" max="9" value="1" title="The sampler's unit number as shown on its display (0 is omni, 1 to 9)"><i class="lamp green" id="lampLink" title="Lit when a MIDI link (or the demo unit) is ready"></i></span>
       </div>
       <div class="keys">
         <button id="connect" class="purple" title="Ask the browser for MIDI access, with System Exclusive allowed">Connect</button>
@@ -283,7 +283,7 @@ footer.credit svg { width:18px; height:18px; flex:none; transform:translateY(-1p
   </div>
   </div>
 </main>
-<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 139">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
+<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 140">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
 <script type="module">
 // src/s612.js
 var TYPE = { WAVE: 33, SETTINGS: 65 };
@@ -365,8 +365,8 @@ function dataBlock(ch2, words) {
   return Uint8Array.from(out2);
 }
 var isAck = (msg) => parseHeader(msg)?.cmd === CMD.ACK;
-var noteOn = (chan, note, vel = 100) => Uint8Array.of(144 | chan - 1 & 15, note & 127, vel & 127);
-var noteOff = (chan, note) => Uint8Array.of(128 | chan - 1 & 15, note & 127, 0);
+var noteOn = (chan2, note, vel = 100) => Uint8Array.of(144 | chan2 - 1 & 15, note & 127, vel & 127);
+var noteOff = (chan2, note) => Uint8Array.of(128 | chan2 - 1 & 15, note & 127, 0);
 function settingsMessage(ch2, values) {
   if (values.length !== 32) throw new Error("settings are 32 values");
   const out2 = [240, 71, ch2, CMD.DATA, 32, TYPE.SETTINGS];
@@ -1283,11 +1283,11 @@ var saved = (() => {
 })();
 var saveMidi = () => {
   try {
-    localStorage.setItem("s612midi", JSON.stringify({ out: $2("out").selectedOptions[0]?.text ?? saved.out, inp: $2("inp").selectedOptions[0]?.text ?? saved.inp, ch: $2("ch").value }));
+    localStorage.setItem("s612midi", JSON.stringify({ out: $2("out").selectedOptions[0]?.text ?? saved.out, inp: $2("inp").selectedOptions[0]?.text ?? saved.inp, ch: $2("ch").value, v: 2 }));
   } catch {
   }
 };
-if (saved.ch !== void 0) $2("ch").value = saved.ch;
+if (saved.ch !== void 0) $2("ch").value = saved.v === 2 ? saved.ch : Math.min(9, (+saved.ch || 0) + 1);
 $2("ch").addEventListener("change", saveMidi);
 var library = null;
 var waiters = [];
@@ -1310,7 +1310,8 @@ var status = (t) => {
   $2("status").textContent = t;
 };
 var linked = () => !!(demo || outPort && inPort);
-var ch = () => Math.max(0, Math.min(8, +$2("ch").value || 0));
+var chan = () => Math.max(0, Math.min(9, Math.round(+$2("ch").value) || 0));
+var ch = () => Math.max(0, chan() - 1);
 var key = () => Math.max(36, Math.min(72, Math.round(+$2("key").value || 72)));
 function refresh() {
   const busy2 = refresh.busy, ok = linked() && !busy2;
@@ -1362,7 +1363,7 @@ var out = (b) => {
   if (b[0] < 240) log("detail", `tx ${toHex(b)}  (${["note off", "note on", "", "CC"][(b[0] >> 4) - 8] ?? "midi"}, channel ${(b[0] & 15) + 1})`);
   if (!demo) outPort.send(b);
 };
-var midiChan = () => Math.max(1, ch());
+var midiChan = () => Math.max(1, chan());
 function send(msg) {
   if (demo) {
     for (const r of demo.receive(msg)) setTimeout(() => onBytes(r), 2);

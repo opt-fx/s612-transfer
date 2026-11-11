@@ -16,7 +16,7 @@ A browser tool for the Akai S612 sampler. It sends a sound to the sampler, reads
 ## Setup
 
 - **MIDI both ways.** A MIDI interface with one cable from the computer to the sampler's MIDI IN, and one from its MIDI OUT back to the computer. Sending and reading both need System Exclusive, which the browser asks about when you press Connect.
-- **Unit number.** Set **Unit** to the MIDI channel number shown on the sampler's display (0 is omni).
+- **Unit number.** Set **Unit** to the MIDI channel shown on the sampler's display (0 is omni, 1 to 9).
 - **Sending replaces the memory.** The S612 holds one sample at a time, so Send, Record and Calibrate overwrite it. They stay disabled until **Allow writes** is ticked. A power cycle or a disk load brings back a saved sound.
 - For **Record**, also connect the computer's audio output to the sampler's input.
 
