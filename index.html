@@ -283,7 +283,7 @@ footer.credit svg { width:18px; height:18px; flex:none; transform:translateY(-1p
   </div>
   </div>
 </main>
-<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 138">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
+<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 139">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
 <script type="module">
 // src/s612.js
 var TYPE = { WAVE: 33, SETTINGS: 65 };
@@ -2270,9 +2270,36 @@ $2("saveQd").onclick = async () => {
     busy(false);
   }
 };
+var isSettings = (m) => {
+  const h = parseHeader(m);
+  return !!h && h.cmd === CMD.DATA && h.type === TYPE.SETTINGS;
+};
+function askMatch(msg, pred, ms = 2500) {
+  return new Promise((res) => {
+    let done = false;
+    const w = (m) => {
+      if (done) return;
+      if (pred(m)) {
+        done = true;
+        clearTimeout(timer);
+        res(m);
+      } else waiters.push(w);
+    };
+    const timer = setTimeout(() => {
+      done = true;
+      waiters = waiters.filter((x) => x !== w);
+      res(null);
+    }, ms);
+    waiters.push(w);
+    send(msg);
+  });
+}
 async function readSettings() {
-  const m = await ask(requestSettings(ch())), h = m && parseHeader(m);
-  return h && h.cmd === CMD.DATA && h.type === TYPE.SETTINGS ? decodeSettings(h.payload) : null;
+  for (let tries = 0; tries < 2; tries++) {
+    const m = await askMatch(requestSettings(ch()), isSettings);
+    if (m) return decodeSettings(parseHeader(m).payload);
+  }
+  return null;
 }
 async function applyMode(modeArg) {
   busy(true);
