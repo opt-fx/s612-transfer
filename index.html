@@ -222,6 +222,7 @@ footer.credit svg { width:18px; height:18px; flex:none; transform:translateY(-1p
         <button id="editGainUp" class="teal" disabled title="Raise the level of the selection (or the whole sound) by 2 dB, never beyond full scale">Louder</button>
         <button id="editGainDown" class="teal" disabled title="Lower the level of the selection (or the whole sound) by 2 dB">Quieter</button>
         <button id="editNorm" class="teal" disabled title="Scale the selection (or the whole sound) so its loudest point uses the full range, for the best use of the sampler's 12 bits. Undo restores it">Normalise</button>
+        <button id="editInvert" class="teal" disabled title="Flip the polarity of the whole sound (every word multiplied by -1). It sounds the same on its own, but fixes a sound that partly cancels when layered with the same sound from another unit, for example after an inverting filter or output stage. Always acts on the whole sound, so the selection is ignored. Undo restores it">Invert</button>
         <button id="bestMatch" class="teal" disabled title="Precise mode: search near the loop marker for the word where the wave carries on smoothly from the last word of the loop (the End page), and move the loop start there. Works best on tonal sounds">Best match</button>
         <button id="editUndo" class="tan" disabled title="Undo the last change: an edit, a fade, Reverse, a marker, the key, the mode (Ctrl+Z). Panel knobs are not included">Undo</button>
       </div>
@@ -283,7 +284,7 @@ footer.credit svg { width:18px; height:18px; flex:none; transform:translateY(-1p
   </div>
   </div>
 </main>
-<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 140">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
+<footer class="credit"><p class="line"><span>S612 transfer: made by OPT</span><span class="ver" title="Build 141">v0.1</span><svg viewBox="0 0 400 400" role="img" aria-label="OPT logo: a striped sun"><defs><mask id="sunmask2"><rect width="400" height="400" fill="#fff"/><rect y="224" width="400" height="8"/><rect y="262" width="400" height="13"/><rect y="302" width="400" height="18"/><rect y="344" width="400" height="24"/></mask></defs><circle cx="200" cy="200" r="196" fill="#FF8A1F" mask="url(#sunmask2)"/></svg></p></footer>
 <script type="module">
 // src/s612.js
 var TYPE = { WAVE: 33, SETTINGS: 65 };
@@ -1334,7 +1335,7 @@ function refresh() {
   for (const id of ["editTrim", "editCut"]) $2(id).disabled = !(has && sel2.partial);
   $2("edPlay").disabled = !(prepared || view === "mem" && readWords);
   $2("edStop").disabled = $2("edPlay").disabled;
-  for (const id of ["editCrop", "editSilence", "editGainUp", "editGainDown", "editNorm"]) $2(id).disabled = !has;
+  for (const id of ["editCrop", "editSilence", "editGainUp", "editGainDown", "editNorm", "editInvert"]) $2(id).disabled = !has;
   $2("editUndo").disabled = !history.length;
   $2("readKnobs").disabled = !ok;
   $2("knobs").classList.toggle("off", !!busy2);
@@ -2962,6 +2963,13 @@ $2("editNorm").onclick = () => edit((m, a, b) => {
   if (pk > 0) for (let i = a; i < b; i++) m[i] = clip(m[i] * 0.98 / pk);
   return m;
 }, true);
+$2("editInvert").onclick = () => {
+  edit((m) => {
+    for (let i = 0; i < m.length; i++) m[i] = -m[i];
+    return m;
+  }, true);
+  log("info", "Polarity inverted (the whole sound). Press Send to put it on the sampler");
+};
 $2("editGainDown").onclick = () => edit((m, a, b) => {
   for (let i = a; i < b; i++) m[i] *= 0.7943;
   return m;

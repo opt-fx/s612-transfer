@@ -29,7 +29,7 @@ The sampler plays a little slow compared with its nominal rate. **Clock trim %**
 ## Editing
 
 - **Waveform.** Drag across it to select; the edit tools act on the selection, or on the whole sound if nothing is selected. Scroll to zoom, Shift-scroll to move along, Space to play.
-- **Edit tools.** Trim, Cut, Crop to start/end, Silence, Louder, Quieter, Normalise. The round **fade knobs** at each side of the waveform set a fade in and a fade out, with a curve choice for each.
+- **Edit tools.** Trim, Cut, Crop to start/end, Silence, Louder, Quieter, Normalise, Invert. **Invert** flips the polarity of the whole sound, for when it partly cancels against the same sound from another unit (an inverting filter or output stage in the chain). The round **fade knobs** at each side of the waveform set a fade in and a fade out, with a curve choice for each.
 - **Undo** (Ctrl+Z) takes back the last change: an edit, a fade, Reverse, a marker, the key or the mode. Panel knobs are not included.
 - **Mode.** One shot plays once, Looping repeats the loop, Alternating plays forwards then backwards. **Mono / poly** and **Reverse** are on the same panel. Reverse swaps Start and End; you can also drag one marker past the other.
 - **Start, End and the loop (splice).** In **Precise** mode (on at start) Start and the splice can sit on any word, and End is counted in pages from Start. Switch it off for **Slider** mode, which works as the sampler's own sliders do. **Best match** searches near the splice for the word where the wave carries on smoothly from the loop's last word.
