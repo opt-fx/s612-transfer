@@ -60,6 +60,8 @@ The S612 fades the last two pages (about 16 ms) before the End marker on its own
 
 ## Library and disk images
 
+**Save WAV** writes the sound read from the sampler, or opened from a `.QD`, as a mono 16-bit WAV at the sample rate of the Rate key, corrected by the clock trim so the pitch is right. It saves the whole memory, not only Start to End, and the WAV carries no loop points.
+
 **Save QD** writes the sound and the panel settings as a `.QD` disk image, for a Gotek or HxC floppy emulator: put it on the USB stick and Load it on the sampler. **Open WAV** also accepts a `.QD`, from this tool, from the sampler's own save, or from a sound library.
 
 The **Library** panel works on a folder of `.QD` files on your computer (the browser asks once and remembers the folder; subfolders are included):
